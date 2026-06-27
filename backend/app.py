@@ -7,7 +7,8 @@ from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field, field_validator
@@ -65,6 +66,14 @@ app = FastAPI(title="PredictEdge API", version="2.1.0", lifespan=lifespan, docs_
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# 自定义验证错误处理，防止泄露内部信息
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": "请求参数错误，请检查输入格式"},
+    )
+
 # 安全响应头中间件
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
@@ -79,21 +88,32 @@ async def security_headers(request: Request, call_next):
     return response
 
 # CORS - 安全配置
-allowed_origins = os.environ.get("ALLOWED_ORIGINS", "").split(",")
-if not allowed_origins or allowed_origins == [""]:
-    allowed_origins = ["*"]
+allowed_origins_str = os.environ.get("ALLOWED_ORIGINS", "")
+if allowed_origins_str:
+    allowed_origins = [o.strip() for o in allowed_origins_str.split(",") if o.strip()]
+else:
+    # 默认只允许 Render 域名和本地开发
+    allowed_origins = [
+        "https://predict-edge-backend.onrender.com",
+        "http://localhost:8002",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:8002",
+    ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=allowed_origins != ["*"],
+    allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
 # ==================== 配置 ====================
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "predictedge-super-secret-key-2024-change-me")
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY environment variable is required. Set a strong random key.")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7天
 
@@ -162,6 +182,7 @@ def init_db():
                       username TEXT UNIQUE NOT NULL,
                       email TEXT UNIQUE,
                       password_hash TEXT NOT NULL,
+                      role TEXT DEFAULT 'user',
                       subscription_tier TEXT DEFAULT 'free',
                       subscription_end_date TEXT,
                       usdt_wallet TEXT,
@@ -215,6 +236,14 @@ def init_db():
         c.execute('''CREATE INDEX IF NOT EXISTS idx_events_category ON events(category)''')
         c.execute('''CREATE INDEX IF NOT EXISTS idx_price_history_event ON price_history(event_id)''')
         c.execute('''CREATE INDEX IF NOT EXISTS idx_alerts_event ON alerts(event_id)''')
+        
+        # 迁移：为旧表添加 role 字段
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'")
+            conn.commit()
+            logger.info("数据库迁移：已添加 role 字段")
+        except sqlite3.OperationalError:
+            pass  # 字段已存在
         
         conn.commit()
         logger.info("数据库初始化成功")
@@ -305,6 +334,14 @@ async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] =
         return user_dict
     finally:
         conn.close()
+
+async def require_admin(current_user: Optional[dict] = Depends(get_current_user)):
+    """管理员权限检查依赖"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="权限不足")
+    return current_user
 
 # ==================== 数据模型 ====================
 
@@ -1428,7 +1465,7 @@ async def get_alerts(
 @app.get("/api/config")
 async def get_system_config():
     """获取系统公开配置"""
-    usdt_wallet = os.environ.get("USDT_WALLET", "TV2MhRQDgBfFXXLxqZ58HhkGSMasCtfZPB")
+    usdt_wallet = os.environ.get("USDT_WALLET", "")
     return {
         "usdt_wallet": usdt_wallet,
         "subscription_tiers": {
@@ -1547,16 +1584,9 @@ async def get_my_orders(
 @app.post("/api/admin/orders/{order_id}/confirm")
 async def admin_confirm_order(
     order_id: str,
-    current_user: Optional[dict] = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     """管理员确认订单到账，激活用户订阅"""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
-    
-    is_admin = current_user.get("username") == "admin"
-    if not is_admin:
-        raise HTTPException(status_code=403, detail="权限不足")
-    
     conn = get_db()
     try:
         order = conn.execute(
@@ -1596,16 +1626,9 @@ async def admin_confirm_order(
 @app.get("/api/admin/orders")
 async def admin_list_orders(
     status: Optional[str] = None,
-    current_user: Optional[dict] = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     """管理员获取所有订单"""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
-    
-    is_admin = current_user.get("username") == "admin"
-    if not is_admin:
-        raise HTTPException(status_code=403, detail="权限不足")
-    
     conn = get_db()
     try:
         if status:
@@ -1628,16 +1651,9 @@ async def admin_list_users(
     search: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
-    current_user: Optional[dict] = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     """管理员获取用户列表，支持搜索"""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
-    
-    is_admin = current_user.get("username") == "admin"
-    if not is_admin:
-        raise HTTPException(status_code=403, detail="权限不足")
-    
     conn = get_db()
     try:
         if search:
@@ -1668,8 +1684,17 @@ async def admin_list_users(
             "agency": "机构版"
         }
         
+        def mask_email(email: str) -> str:
+            if not email or "@" not in email:
+                return ""
+            local, domain = email.split("@", 1)
+            if len(local) <= 2:
+                return f"{local[0]}***@{domain}"
+            return f"{local[:2]}***@{domain}"
+        
         for u in user_list:
             u["tier_name"] = tier_names.get(u["subscription_tier"], u["subscription_tier"])
+            u["email"] = mask_email(u.get("email", ""))
         
         return {"users": user_list, "total": total["count"] if total else 0, "count": len(user_list)}
     finally:
@@ -1679,16 +1704,9 @@ async def admin_list_users(
 async def admin_set_user_subscription(
     user_id: int,
     request: Request,
-    current_user: Optional[dict] = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     """管理员手动设置用户订阅等级"""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
-    
-    is_admin = current_user.get("username") == "admin"
-    if not is_admin:
-        raise HTTPException(status_code=403, detail="权限不足")
-    
     try:
         body = await request.json()
     except:
@@ -1857,7 +1875,9 @@ async def create_order(
     import uuid
     amount = SUBSCRIPTION_TIERS[req.tier]["price"]
     order_id = f"order_{uuid.uuid4().hex[:12]}"
-    usdt_wallet = os.environ.get("USDT_WALLET", "TV2MhRQDgBfFXXLxqZ58HhkGSMasCtfZPB")
+    usdt_wallet = os.environ.get("USDT_WALLET", "")
+    if not usdt_wallet:
+        raise HTTPException(status_code=500, detail="支付配置错误，请联系管理员")
     
     conn = get_db()
     try:
@@ -1884,20 +1904,15 @@ async def create_order(
 @app.get("/health")
 async def health_check():
     """健康检查"""
-    return {
-        "status": "healthy",
-        "events_count": len(cache.events),
-        "alerts_count": len(cache.alerts),
-        "last_update": cache.last_update.isoformat() if cache.last_update else None
-    }
+    return {"status": "ok"}
 
 # ==================== 后台数据更新 ====================
 
 async def check_usdt_deposits():
     """检查USDT充值，自动激活订单"""
     try:
-        usdt_wallet = os.environ.get("USDT_WALLET", "TV2MhRQDgBfFXXLxqZ58HhkGSMasCtfZPB")
-        if not usdt_wallet or usdt_wallet.startswith("TQp1a2b3c4"):
+        usdt_wallet = os.environ.get("USDT_WALLET", "")
+        if not usdt_wallet:
             return
         
         conn = get_db()
