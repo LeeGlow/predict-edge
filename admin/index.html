@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PredictEdge 管理后台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+      min-height: 100vh;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: black;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .status-pending { color: #fbbf24; }
+    .status-pending_manual { color: #60a5fa; }
+    .status-paid { color: #34d399; }
+    .status-completed { color: #10b981; }
+    .status-cancelled { color: #f87171; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    th { font-size: 12px; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 600; }
+    tr:hover { background: rgba(255,255,255,0.02); }
+    .input-field {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: white;
+      padding: 10px 14px;
+      border-radius: 8px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-field:focus {
+      border-color: #10b981;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-free { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+    .badge-basic { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .badge-pro { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge-agency { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+  </style>
+</head>
+<body>
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- 头部 -->
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-bold mb-1">PredictEdge 管理后台</h1>
+        <p class="text-white/50 text-sm">订单管理 · 用户管理 · 数据统计</p>
+      </div>
+      <div id="auth-section">
+        <div id="login-form" class="glass rounded-xl p-4 w-72">
+          <div class="text-sm font-medium mb-3">管理员登录</div>
+          <input type="text" id="admin-username" placeholder="用户名" class="input-field mb-3 text-sm">
+          <input type="password" id="admin-password" placeholder="密码" class="input-field mb-3 text-sm">
+          <button onclick="adminLogin()" class="btn-primary w-full py-2 rounded-lg text-sm">登录</button>
+        </div>
+        <div id="user-info" class="hidden text-right">
+          <div class="text-sm font-medium text-emerald-400">管理员已登录</div>
+          <button onclick="adminLogout()" class="text-xs text-white/50 hover:text-white mt-1">退出登录</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 未登录提示 -->
+    <div id="not-logged-in" class="glass rounded-2xl p-12 text-center">
+      <div class="text-5xl mb-4">🔐</div>
+      <h2 class="text-xl font-bold mb-2">管理后台</h2>
+      <p class="text-white/50 text-sm mb-6">请使用管理员账号登录以访问后台功能</p>
+      <div class="text-xs text-white/30">
+        提示：使用 admin 账号登录后即可使用
+      </div>
+    </div>
+
+    <!-- 已登录内容 -->
+    <div id="admin-content" class="hidden">
+      <!-- 统计卡片 -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="glass rounded-xl p-5">
+          <div class="text-white/50 text-xs mb-1">总用户数</div>
+          <div class="text-2xl font-bold" id="stat-users">-</div>
+        </div>
+        <div class="glass rounded-xl p-5">
+          <div class="text-white/50 text-xs mb-1">付费用户</div>
+          <div class="text-2xl font-bold text-emerald-400" id="stat-paid">-</div>
+        </div>
+        <div class="glass rounded-xl p-5">
+          <div class="text-white/50 text-xs mb-1">待处理订单</div>
+          <div class="text-2xl font-bold text-amber-400" id="stat-pending">-</div>
+        </div>
+        <div class="glass rounded-xl p-5">
+          <div class="text-white/50 text-xs mb-1">总收入</div>
+          <div class="text-2xl font-bold text-edge-400" id="stat-revenue">$-</div>
+        </div>
+      </div>
+
+      <!-- Tab切换 -->
+      <div class="flex gap-1 mb-6 border-b border-white/5">
+        <button onclick="switchAdminTab('orders')" id="tab-orders" class="px-5 py-3 text-sm font-medium border-b-2 border-emerald-400 text-emerald-400">订单管理</button>
+        <button onclick="switchAdminTab('users')" id="tab-users" class="px-5 py-3 text-sm font-medium text-white/50 hover:text-white">用户管理</button>
+        <button onclick="switchAdminTab('tools')" id="tab-tools" class="px-5 py-3 text-sm font-medium text-white/50 hover:text-white">工具箱</button>
+      </div>
+
+      <!-- 订单管理 -->
+      <div id="panel-orders" class="admin-panel">
+        <div class="flex items-center gap-3 mb-4">
+          <select id="order-status-filter" onchange="loadOrders()" class="input-field w-auto text-sm">
+            <option value="">全部状态</option>
+            <option value="pending">待支付</option>
+            <option value="pending_manual">待人工审核</option>
+            <option value="paid">已支付</option>
+            <option value="completed">已完成</option>
+          </select>
+          <button onclick="loadOrders()" class="btn-secondary px-4 py-2 rounded-lg text-sm">刷新</button>
+        </div>
+        <div class="glass rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>订单号</th>
+                  <th>用户</th>
+                  <th>等级</th>
+                  <th>金额</th>
+                  <th>状态</th>
+                  <th>交易哈希</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="orders-table">
+                <tr><td colspan="8" class="text-center py-8 text-white/50">加载中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 用户管理 -->
+      <div id="panel-users" class="admin-panel hidden">
+        <div class="flex items-center gap-3 mb-4">
+          <input type="text" id="user-search" placeholder="搜索用户名/邮箱..." class="input-field w-64 text-sm">
+          <button onclick="loadUsers()" class="btn-secondary px-4 py-2 rounded-lg text-sm">搜索</button>
+        </div>
+        <div class="glass rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>用户名</th>
+                  <th>邮箱</th>
+                  <th>订阅等级</th>
+                  <th>到期时间</th>
+                  <th>注册时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="users-table">
+                <tr><td colspan="7" class="text-center py-8 text-white/50">加载中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 工具箱 -->
+      <div id="panel-tools" class="admin-panel hidden">
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="glass rounded-xl p-6">
+            <h3 class="font-bold mb-4">手动激活订阅</h3>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs text-white/50 block mb-1">用户名 / 用户ID</label>
+                <input type="text" id="manual-user" class="input-field text-sm" placeholder="输入用户名或用户ID">
+              </div>
+              <div>
+                <label class="text-xs text-white/50 block mb-1">订阅等级</label>
+                <select id="manual-tier" class="input-field text-sm">
+                  <option value="basic">基础版 ($19.9/月)</option>
+                  <option value="pro">专业版 ($59.9/月)</option>
+                  <option value="agency">机构版 ($199.9/月)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-white/50 block mb-1">天数</label>
+                <input type="number" id="manual-days" class="input-field text-sm" value="30" min="1">
+              </div>
+              <button onclick="manualActivate()" class="btn-primary w-full py-2.5 rounded-lg text-sm">激活订阅</button>
+            </div>
+          </div>
+          <div class="glass rounded-xl p-6">
+            <h3 class="font-bold mb-4">系统信息</h3>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between">
+                <span class="text-white/50">API 地址</span>
+                <span id="info-api" class="font-mono text-xs">-</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-white/50">管理员账号</span>
+                <span class="text-emerald-400">admin</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-white/50">USDT钱包</span>
+                <span id="info-wallet" class="font-mono text-xs">-</span>
+              </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/5">
+              <button onclick="loadSystemConfig()" class="btn-secondary w-full py-2 rounded-lg text-sm">刷新系统配置</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+  <script>
+    const API_BASE = (() => {
+      const host = window.location.hostname;
+      if (host === 'localhost' || host === '127.0.0.1') {
+        return 'http://localhost:8002/api';
+      }
+      return '/api';
+    })();
+
+    let adminToken = localStorage.getItem('predictedge_admin_token') || '';
+    let currentAdminTab = 'orders';
+
+    function toast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const colors = {
+        info: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+        success: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+        error: 'bg-red-500/20 text-red-300 border border-red-500/30',
+        warning: 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+      };
+      const el = document.createElement('div');
+      el.className = `px-4 py-3 rounded-lg backdrop-blur-xl text-sm ${colors[type]} animate-fade-in`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    async function api(endpoint, options = {}) {
+      const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+      if (adminToken) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
+      }
+      const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || data.message || '请求失败');
+      return data;
+    }
+
+    async function adminLogin() {
+      const username = document.getElementById('admin-username').value.trim();
+      const password = document.getElementById('admin-password').value.trim();
+      if (!username || !password) {
+        toast('请输入用户名和密码', 'warning');
+        return;
+      }
+      try {
+        const result = await api('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ username, password })
+        });
+        adminToken = result.access_token;
+        localStorage.setItem('predictedge_admin_token', adminToken);
+        toast('登录成功', 'success');
+        checkAdminStatus();
+      } catch (e) {
+        toast('登录失败: ' + e.message, 'error');
+      }
+    }
+
+    function adminLogout() {
+      adminToken = '';
+      localStorage.removeItem('predictedge_admin_token');
+      checkAdminStatus();
+      toast('已退出登录', 'info');
+    }
+
+    async function checkAdminStatus() {
+      if (!adminToken) {
+        document.getElementById('login-form').classList.remove('hidden');
+        document.getElementById('user-info').classList.add('hidden');
+        document.getElementById('not-logged-in').classList.remove('hidden');
+        document.getElementById('admin-content').classList.add('hidden');
+        return;
+      }
+
+      try {
+        const orders = await api('/admin/orders?status=pending_manual');
+        // 如果能获取订单，说明是管理员
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('user-info').classList.remove('hidden');
+        document.getElementById('not-logged-in').classList.add('hidden');
+        document.getElementById('admin-content').classList.remove('hidden');
+        loadDashboard();
+        loadOrders();
+        loadSystemConfig();
+      } catch (e) {
+        toast('管理员验证失败: ' + e.message, 'error');
+        adminToken = '';
+        localStorage.removeItem('predictedge_admin_token');
+        document.getElementById('login-form').classList.remove('hidden');
+        document.getElementById('user-info').classList.add('hidden');
+        document.getElementById('not-logged-in').classList.remove('hidden');
+        document.getElementById('admin-content').classList.add('hidden');
+      }
+    }
+
+    function switchAdminTab(tab) {
+      currentAdminTab = tab;
+      ['orders', 'users', 'tools'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.remove('border-b-2', 'border-emerald-400', 'text-emerald-400');
+        document.getElementById(`tab-${t}`).classList.add('text-white/50');
+        document.getElementById(`panel-${t}`).classList.add('hidden');
+      });
+      document.getElementById(`tab-${tab}`).classList.add('border-b-2', 'border-emerald-400', 'text-emerald-400');
+      document.getElementById(`tab-${tab}`).classList.remove('text-white/50');
+      document.getElementById(`panel-${tab}`).classList.remove('hidden');
+
+      if (tab === 'orders') loadOrders();
+      if (tab === 'users') loadUsers();
+    }
+
+    async function loadDashboard() {
+      try {
+        const data = await api('/admin/dashboard');
+        document.getElementById('stat-users').textContent = data.total_users || 0;
+        document.getElementById('stat-paid').textContent = data.paid_users || 0;
+        document.getElementById('stat-pending').textContent = data.pending_orders || 0;
+        document.getElementById('stat-revenue').textContent = '$' + (data.total_revenue || 0).toFixed(2);
+      } catch (e) {
+        console.warn('加载统计失败', e);
+      }
+    }
+
+    async function loadOrders() {
+      const status = document.getElementById('order-status-filter').value;
+      try {
+        const endpoint = status ? `/admin/orders?status=${status}` : '/admin/orders';
+        const data = await api(endpoint);
+        const orders = data.orders || [];
+        
+        const tbody = document.getElementById('orders-table');
+        if (orders.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-white/50">暂无订单</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = orders.map(o => `
+          <tr>
+            <td class="font-mono text-xs">${o.id}</td>
+            <td class="text-sm">用户 #${o.user_id}</td>
+            <td><span class="badge badge-${o.tier}">${o.tier}</span></td>
+            <td class="font-medium">$${o.amount}</td>
+            <td><span class="status-${o.status} text-sm">${getStatusText(o.status)}</span></td>
+            <td class="font-mono text-xs max-w-[150px] truncate" title="${o.tx_hash || '-'}">${o.tx_hash || '-'}</td>
+            <td class="text-xs text-white/50">${formatDate(o.created_at)}</td>
+            <td>
+              ${(o.status === 'pending' || o.status === 'pending_manual') ? `
+                <button onclick="confirmOrder('${o.id}')" class="btn-primary px-3 py-1.5 rounded text-xs">确认到账</button>
+              ` : '<span class="text-white/30 text-xs">-</span>'}
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        document.getElementById('orders-table').innerHTML = 
+          `<tr><td colspan="8" class="text-center py-8 text-red-400">加载失败: ${e.message}</td></tr>`;
+      }
+    }
+
+    async function confirmOrder(orderId) {
+      if (!confirm('确认该订单已到账？确认后用户订阅将自动激活。')) return;
+      try {
+        await api(`/admin/orders/${orderId}/confirm`, { method: 'POST' });
+        toast('订单已确认，订阅已激活', 'success');
+        loadOrders();
+        loadDashboard();
+      } catch (e) {
+        toast('确认失败: ' + e.message, 'error');
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        const search = document.getElementById('user-search').value.trim();
+        const endpoint = search ? `/admin/users?search=${encodeURIComponent(search)}` : '/admin/users';
+        const data = await api(endpoint);
+        const users = data.users || [];
+        
+        const tbody = document.getElementById('users-table');
+        if (users.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-white/50">暂无用户数据</td></tr>';
+          return;
+        }
+
+        const tierBadges = {
+          free: 'badge badge-free',
+          basic: 'badge badge-basic',
+          pro: 'badge badge-pro',
+          agency: 'badge badge-agency'
+        };
+
+        tbody.innerHTML = users.map(u => `
+          <tr>
+            <td class="text-sm">#${u.id}</td>
+            <td class="text-sm font-medium">${u.username || '-'}</td>
+            <td class="text-xs text-white/50">${u.email || '-'}</td>
+            <td><span class="${tierBadges[u.subscription_tier] || 'badge'}">${u.tier_name || u.subscription_tier}</span></td>
+            <td class="text-xs text-white/50">${u.subscription_end_date ? formatDate(u.subscription_end_date) : '-'}</td>
+            <td class="text-xs text-white/50">${formatDate(u.created_at)}</td>
+            <td>
+              <button onclick="showUserEditModal(${u.id}, '${u.username}', '${u.subscription_tier}')" class="btn-secondary px-3 py-1.5 rounded text-xs">修改订阅</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        document.getElementById('users-table').innerHTML = 
+          `<tr><td colspan="7" class="text-center py-8 text-red-400">加载失败: ${e.message}</td></tr>`;
+      }
+    }
+
+    function showUserEditModal(userId, username, currentTier) {
+      const tier = prompt(`设置用户 ${username} 的订阅等级 (free/basic/pro/agency):`, currentTier);
+      if (!tier) return;
+      const validTiers = ['free', 'basic', 'pro', 'agency'];
+      if (!validTiers.includes(tier)) {
+        toast('无效的订阅等级', 'error');
+        return;
+      }
+      const daysStr = prompt('设置天数:', '30');
+      const days = parseInt(daysStr);
+      if (!days || days < 1) {
+        toast('请输入有效天数', 'error');
+        return;
+      }
+      manualActivateById(userId, tier, days);
+    }
+
+    function showUserAction(userId) {
+      showUserEditModal(userId, 'user_' + userId, 'pro');
+    }
+
+    async function manualActivate() {
+      const userInput = document.getElementById('manual-user').value.trim();
+      const tier = document.getElementById('manual-tier').value;
+      const days = parseInt(document.getElementById('manual-days').value);
+      
+      if (!userInput) {
+        toast('请输入用户名或用户ID', 'warning');
+        return;
+      }
+      if (!days || days < 1) {
+        toast('请输入有效天数', 'warning');
+        return;
+      }
+
+      const userId = parseInt(userInput);
+      if (userId) {
+        manualActivateById(userId, tier, days);
+      } else {
+        try {
+          const data = await api(`/admin/users?search=${encodeURIComponent(userInput)}`);
+          const users = data.users || [];
+          if (users.length === 0) {
+            toast('未找到该用户', 'error');
+            return;
+          }
+          if (users.length > 1) {
+            toast('找到多个用户，请使用更精确的用户名', 'warning');
+            return;
+          }
+          manualActivateById(users[0].id, tier, days, users[0].username);
+        } catch (e) {
+          toast('查找用户失败: ' + e.message, 'error');
+        }
+      }
+    }
+
+    async function manualActivateById(userId, tier, days, username) {
+      try {
+        await api(`/admin/users/${userId}/subscription`, {
+          method: 'POST',
+          body: JSON.stringify({ tier, days })
+        });
+        const userLabel = username ? username : `#${userId}`;
+        toast(`用户 ${userLabel} 已激活 ${tier} 订阅 ${days} 天`, 'success');
+        loadDashboard();
+        loadOrders();
+        if (currentAdminTab === 'users') loadUsers();
+      } catch (e) {
+        toast('激活失败: ' + e.message, 'error');
+      }
+    }
+
+    async function loadSystemConfig() {
+      try {
+        const config = await api('/config');
+        document.getElementById('info-api').textContent = API_BASE;
+        document.getElementById('info-wallet').textContent = config.usdt_wallet ? config.usdt_wallet.slice(0, 20) + '...' : '-';
+      } catch (e) {
+        console.warn('加载配置失败', e);
+      }
+    }
+
+    function getStatusText(status) {
+      const map = {
+        'pending': '待支付',
+        'pending_manual': '待审核',
+        'paid': '已支付',
+        'completed': '已完成',
+        'cancelled': '已取消',
+        'expired': '已过期'
+      };
+      return map[status] || status;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      try {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
+    // 初始化
+    checkAdminStatus();
+  </script>
+</body>
+</html>

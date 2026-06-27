@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "buildCommand": "echo 'Static build complete'",
+  "outputDirectory": "frontend",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://predict-edge-backend.onrender.com/api/:path*"
+    }
+  ]
+}

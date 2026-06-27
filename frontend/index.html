@@ -1,0 +1,2917 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0a0b" />
+  <title>PredictEdge — 预测市场智能套利平台</title>
+  <meta name="description" content="AI驱动的预测市场套利工具，实时概率偏差检测，历史胜率分析，智能套利信号" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            edge: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              300: '#86efac',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            }
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #0a0a0b;
+      color: #fafafa;
+      overflow-x: hidden;
+    }
+    
+    .glass {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .glass-hover:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #22c55e 0%, #4ade80 50%, #86efac 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .gradient-border {
+      position: relative;
+      background: #0a0a0b;
+    }
+    .gradient-border::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      padding: 1px;
+      border-radius: inherit;
+      background: linear-gradient(135deg, #22c55e, #86efac, #22c55e);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    
+    .prob-bar-bg {
+      background: rgba(255,255,255,0.06);
+    }
+    
+    .glow-green {
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+    
+    .tab-active {
+      color: #22c55e;
+      border-bottom: 2px solid #22c55e;
+    }
+    
+    .modal-backdrop {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-up { animation: slideUp 0.25s ease-out; }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .animate-fade-in { animation: fadeIn 0.2s ease-out; }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+    
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+      background-size: 200% 100%;
+      animation: skeleton 1.5s ease-in-out infinite;
+    }
+    @keyframes skeleton {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    /* 移动端底部导航 */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 11, 0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 40;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 10px;
+      gap: 2px;
+      transition: all 0.2s;
+    }
+    
+    .bottom-nav-item.active {
+      color: #22c55e;
+    }
+    
+    .bottom-nav-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+    
+    /* 移动端安全区域 */
+    .pb-safe { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+    
+    @media (min-width: 768px) {
+      .bottom-nav { display: none; }
+      .pb-safe { padding-bottom: 0; }
+    }
+    
+    /* 隐藏滚动条但保留功能 */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      animation: slideDown 0.3s ease-out;
+    }
+    
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div id="app"></div>
+  <div id="toast-container"></div>
+
+  <script>
+    // ==================== 配置 ====================
+    const API_BASE = (() => {
+      const host = window.location.hostname;
+      const protocol = window.location.protocol;
+      if (protocol === 'file:') {
+        return 'http://localhost:8002/api';
+      }
+      if (host === 'localhost' || host === '127.0.0.1') {
+        const port = window.location.port || '8002';
+        return `${protocol}//${host}:${port}/api`;
+      }
+      return '/api';
+    })();
+
+    // ==================== 国际化 i18n ====================
+    const i18n = {
+      zh: {
+        // 导航
+        'nav.markets': '市场行情',
+        'nav.arbitrage': '套利信号',
+        'nav.analysis': '策略分析',
+        'nav.pricing': '定价方案',
+        'nav.login': '登录',
+        'nav.register': '免费注册',
+        'nav.logout': '退出',
+        
+        // Hero
+        'hero.badge': '实时监控 Polymarket / Manifold / Kalshi 全球主流预测市场',
+        'hero.title1': '用 AI 捕捉预测市场的',
+        'hero.title2': '定价偏差与套利机会',
+        'hero.subtitle': '跨平台实时扫描概率错配，自动扣除手续费与滑点成本，输出可执行的套利信号，让市场的错误定价成为你的收益来源。',
+        'hero.cta1': '免费注册，解锁今日3个套利机会预览',
+        'hero.cta2': '浏览全市场行情',
+        'hero.note': '无需绑定资产 · 实时预警 · 专业解锁全套套利策略',
+        
+        // 为什么选择
+        'why.title': '为什么选择 PredictEdge？',
+        'why.subtitle': '三个核心壁垒，助你在预测市场建立优势',
+        'why.1.title': '毫秒级跨平台价差捕捉',
+        'why.1.desc': '同时监控 5+ 预测平台的数百个事件，数据延迟低于 100ms，先人一步捕捉短暂的价差窗口。',
+        'why.2.title': 'AI 概率偏差智能测算',
+        'why.2.desc': '基于历史数据与新闻语义模型，识别事件定价的逻辑错配，仅筛选扣除全部成本后仍有正收益的机会。',
+        'why.3.title': '全链路风控收益计算',
+        'why.3.desc': '自动计入手续费、滑点、订单深度影响，避免 "账面盈利、实盘亏损" 的常见陷阱。',
+        
+        // 套利机会
+        'arb.title': '今日实时捕捉・可执行套利机会',
+        'arb.subtitle': '所有机会均已扣除手续费与滑点成本，仅展示净收益为正的标的',
+        'arb.viewAll': '查看全部套利机会',
+        'arb.upgrade': '升级专业版解锁全部套利机会',
+        'arb.unlocked': '已解锁全部高级功能',
+        
+        // 策略
+        'strategy.title': '三种成熟套利策略・AI 全自动化执行',
+        'strategy.subtitle': '可验证的套利逻辑，而非玄学 AI',
+        'strategy.1.title': 'Dutch Book 无风险套利',
+        'strategy.1.desc': '利用同一事件多空合约价格之和偏离 1 的定价错误，双边同时建仓，无论事件结果如何，均可锁定固定收益。',
+        'strategy.2.title': '跨平台价差套利',
+        'strategy.2.desc': '同一事件在不同预测平台存在赔率差，低买高卖赚取差价，AI 自动匹配流动性最优的双边市场。',
+        'strategy.3.title': '关联事件逻辑套利',
+        'strategy.3.desc': '通过 AI 识别存在因果关联的多个事件，利用市场定价的逻辑偏差构建对冲组合，获取超额收益。',
+        
+        // 警告
+        'risk.warning': '⚠️ 预测市场交易存在本金损失风险，请您根据自身风险承受能力谨慎参与。PredictEdge 仅为数据工具与策略分析平台，不提供任何投资建议与保本承诺。',
+        
+        // Tab
+        'tab.markets': '📊 市场',
+        'tab.alerts': '🔔 警报',
+        'tab.analysis': '📈 分析',
+        'tab.arbitrage': '💎 套利 PRO',
+        'tab.profile': '👤 我的',
+        
+        // 分类
+        'cat.all': '全部',
+        'cat.crypto': '₿ 加密',
+        'cat.weather': '🌤️ 天气',
+        'cat.sports': '⚽ 体育',
+        'cat.politics': '🏛️ 政治',
+        'cat.tech': '🤖 科技',
+        
+        // 搜索
+        'search.placeholder': '搜索事件...',
+        
+        // AI分析
+        'ai.title': '🤖 AI 概率分析',
+        'ai.predicted': '预测概率',
+        'ai.deviation': '偏差值',
+        'ai.confidence': '置信度',
+        'ai.expectedProfit': '预期收益',
+        'ai.recommendation': '建议',
+        'ai.buyYes': '建议买 YES',
+        'ai.buyNo': '建议买 NO',
+        'ai.hold': '建议观望',
+        'ai.unlocked': '✓ 已解锁',
+        'ai.remaining': '今日剩余 {n} 次解锁',
+        'ai.unlockBtn': '解锁查看完整分析',
+        'ai.upgradeBtn': '升级专业版 无限解锁',
+        
+        // 定价
+        'pricing.title': '选择适合你的方案',
+        'pricing.subtitle': '从免费版开始，随时升级解锁更多功能',
+        'pricing.free': '免费版',
+        'pricing.basic': '基础版',
+        'pricing.pro': '专业版',
+        'pricing.agency': '机构版',
+        'pricing.month': '/月',
+        'pricing.startFree': '免费开始',
+        'pricing.upgradeNow': '立即升级',
+        'pricing.startArb': '开始套利',
+        'pricing.contactUs': '联系我们',
+        
+        // FAQ
+        'faq.title': '常见问题',
+        'faq.subtitle': '消解决策疑虑，降低使用门槛',
+        
+        // CTA
+        'cta.title': '开始捕捉预测市场的套利机会',
+        'cta.subtitle': '免费注册即可领取今日 3 个实时套利信号，无需绑定资产',
+        'cta.button': '免费注册，立即开始',
+        
+        // 页脚
+        'footer.about': '关于',
+        'footer.terms': '条款',
+        'footer.privacy': '隐私',
+        'footer.contact': '联系',
+        
+        // 认证
+        'auth.login': '登录',
+        'auth.register': '立即注册',
+        'auth.welcomeBack': '欢迎回来',
+        'auth.loginSubtitle': '登录以继续使用 PredictEdge',
+        'auth.createAccount': '创建账号',
+        'auth.registerSubtitle': '注册即可领取 3 个免费套利信号',
+        'auth.username': '用户名',
+        'auth.usernamePlaceholder': '你的用户名',
+        'auth.email': '邮箱',
+        'auth.emailPlaceholder': '你的邮箱',
+        'auth.password': '密码',
+        'auth.passwordPlaceholder': '至少6位字符',
+        'auth.haveAccount': '已有账号？',
+        'auth.noAccount': '没有账号？',
+        
+        // 支付
+        'payment.title': '升级到专业版',
+        'payment.subtitle': '解锁全部高级功能',
+        'payment.method': '支付方式',
+        'payment.usdt': 'USDT (TRC20)',
+        'payment.address': '钱包地址',
+        'payment.copy': '复制地址',
+        'payment.copied': '已复制',
+        'payment.amount': '支付金额',
+        'payment.txHash': '交易哈希',
+        'payment.txPlaceholder': '粘贴交易哈希以确认支付',
+        'payment.submit': '提交支付验证',
+        'payment.pending': '支付审核中',
+        'payment.pendingDesc': '我们已收到您的支付申请，通常在 10-30 分钟内到账并自动激活。',
+        'payment.checkStatus': '查看订单状态',
+        
+        // 个人中心
+        'profile.title': '我的账号',
+        'profile.subtitle': '管理您的订阅和账户设置',
+        'profile.tier': '当前套餐',
+        'profile.expire': '到期时间',
+        'profile.upgrade': '升级套餐',
+        'profile.telegram': 'Telegram 绑定',
+        'profile.telegramDesc': '绑定后可接收实时价格警报',
+        'profile.bind': '去绑定',
+        'profile.bound': '已绑定',
+        'profile.settings': '账户设置',
+        
+        // 套利
+        'arb.signalStrength': '信号强度',
+        'arb.expectedReturn': '预期收益',
+        'arb.winRate': '历史胜率',
+        'arb.platforms': '涉及平台',
+        'arb.strategy': '策略类型',
+        'arb.viewDetail': '查看详情',
+        
+        // 通用
+        'common.loading': '加载中...',
+        'common.noData': '暂无数据',
+        'common.volume': '交易量',
+        'common.timeLeft': '剩余时间',
+        'common.change24h': '24h涨跌',
+        'common.yesProb': 'Yes 概率',
+        'common.market': '市场',
+        'common.category': '分类',
+      },
+      en: {
+        // Navigation
+        'nav.markets': 'Markets',
+        'nav.arbitrage': 'Arbitrage',
+        'nav.analysis': 'Analysis',
+        'nav.pricing': 'Pricing',
+        'nav.login': 'Login',
+        'nav.register': 'Sign Up',
+        'nav.logout': 'Logout',
+        
+        // Hero
+        'hero.badge': 'Real-time monitoring of Polymarket / Manifold / Kalshi prediction markets',
+        'hero.title1': 'Capture prediction market',
+        'hero.title2': 'pricing inefficiencies with AI',
+        'hero.subtitle': 'Cross-platform real-time probability mismatch scanning, automatically deducting fees and slippage costs, delivering actionable arbitrage signals that turn market mispricing into your profit source.',
+        'hero.cta1': 'Sign up free, unlock 3 arbitrage previews today',
+        'hero.cta2': 'Browse all markets',
+        'hero.note': 'No asset binding required · Real-time alerts · Pro unlocks full strategies',
+        
+        // Why
+        'why.title': 'Why Choose PredictEdge?',
+        'why.subtitle': 'Three core moats to build your edge in prediction markets',
+        'why.1.title': 'Millisecond cross-platform spread capture',
+        'why.1.desc': 'Monitor hundreds of events across 5+ prediction platforms with <100ms latency, catching fleeting spread windows before anyone else.',
+        'why.2.title': 'AI probability deviation intelligence',
+        'why.2.desc': 'Identify logical mispricing based on historical data and news semantic models, only filtering opportunities with positive returns after all costs.',
+        'why.3.title': 'Full-stack risk-adjusted return calculation',
+        'why.3.desc': 'Automatically accounts for fees, slippage, and order depth impact, avoiding the common trap of "paper profits, real losses."',
+        
+        // Arbitrage
+        'arb.title': "Today's Live Actionable Arbitrage Opportunities",
+        'arb.subtitle': 'All opportunities have fees and slippage deducted, only positive net return targets shown',
+        'arb.viewAll': 'View all arbitrage opportunities',
+        'arb.upgrade': 'Upgrade to Pro for all opportunities',
+        'arb.unlocked': 'All premium features unlocked',
+        
+        // Strategy
+        'strategy.title': 'Three Proven Arbitrage Strategies · Fully AI-Executed',
+        'strategy.subtitle': 'Verifiable arbitrage logic, not voodoo AI',
+        'strategy.1.title': 'Dutch Book Risk-Free Arbitrage',
+        'strategy.1.desc': 'Exploit pricing errors where yes+no contract prices diverge from 1, building both sides simultaneously to lock in fixed returns regardless of outcome.',
+        'strategy.2.title': 'Cross-Platform Spread Arbitrage',
+        'strategy.2.desc': 'Same event trades at different odds across platforms. Buy low, sell high. AI auto-matches the most liquid two-sided markets.',
+        'strategy.3.title': 'Correlated Event Logical Arbitrage',
+        'strategy.3.desc': 'AI identifies causally linked events, builds hedged portfolios using market pricing logical deviations for excess returns.',
+        
+        // Risk
+        'risk.warning': '⚠️ Prediction market trading carries risk of principal loss. Please participate cautiously according to your risk tolerance. PredictEdge is a data tool and strategy analysis platform only. No investment advice or principal guarantee provided.',
+        
+        // Tab
+        'tab.markets': '📊 Markets',
+        'tab.alerts': '🔔 Alerts',
+        'tab.analysis': '📈 Analysis',
+        'tab.arbitrage': '💎 Arbitrage PRO',
+        'tab.profile': '👤 Profile',
+        
+        // Category
+        'cat.all': 'All',
+        'cat.crypto': '₿ Crypto',
+        'cat.weather': '🌤️ Weather',
+        'cat.sports': '⚽ Sports',
+        'cat.politics': '🏛️ Politics',
+        'cat.tech': '🤖 Tech',
+        
+        // Search
+        'search.placeholder': 'Search events...',
+        
+        // AI Analysis
+        'ai.title': '🤖 AI Probability Analysis',
+        'ai.predicted': 'Predicted Probability',
+        'ai.deviation': 'Deviation',
+        'ai.confidence': 'Confidence',
+        'ai.expectedProfit': 'Expected Return',
+        'ai.recommendation': 'Recommendation',
+        'ai.buyYes': 'Buy YES',
+        'ai.buyNo': 'Buy NO',
+        'ai.hold': 'Hold',
+        'ai.unlocked': '✓ Unlocked',
+        'ai.remaining': '{n} unlocks remaining today',
+        'ai.unlockBtn': 'Unlock full analysis',
+        'ai.upgradeBtn': 'Upgrade to Pro · Unlimited',
+        
+        // Pricing
+        'pricing.title': 'Choose Your Plan',
+        'pricing.subtitle': 'Start with Free, upgrade anytime for more features',
+        'pricing.free': 'Free',
+        'pricing.basic': 'Basic',
+        'pricing.pro': 'Pro',
+        'pricing.agency': 'Agency',
+        'pricing.month': '/mo',
+        'pricing.startFree': 'Get Started Free',
+        'pricing.upgradeNow': 'Upgrade Now',
+        'pricing.startArb': 'Start Arbitrage',
+        'pricing.contactUs': 'Contact Us',
+        
+        // FAQ
+        'faq.title': 'Frequently Asked Questions',
+        'faq.subtitle': 'Resolve doubts, lower barriers to entry',
+        
+        // CTA
+        'cta.title': 'Start capturing prediction market arbitrage opportunities',
+        'cta.subtitle': 'Sign up free for 3 live arbitrage signals today, no asset binding required',
+        'cta.button': 'Sign Up Free, Get Started',
+        
+        // Footer
+        'footer.about': 'About',
+        'footer.terms': 'Terms',
+        'footer.privacy': 'Privacy',
+        'footer.contact': 'Contact',
+        
+        // Auth
+        'auth.login': 'Login',
+        'auth.register': 'Sign Up',
+        'auth.welcomeBack': 'Welcome Back',
+        'auth.loginSubtitle': 'Login to continue using PredictEdge',
+        'auth.createAccount': 'Create Account',
+        'auth.registerSubtitle': 'Sign up to get 3 free arbitrage signals',
+        'auth.username': 'Username',
+        'auth.usernamePlaceholder': 'Your username',
+        'auth.email': 'Email',
+        'auth.emailPlaceholder': 'Your email',
+        'auth.password': 'Password',
+        'auth.passwordPlaceholder': 'At least 6 characters',
+        'auth.haveAccount': 'Already have an account?',
+        'auth.noAccount': "Don't have an account?",
+        
+        // Payment
+        'payment.title': 'Upgrade to Pro',
+        'payment.subtitle': 'Unlock all premium features',
+        'payment.method': 'Payment Method',
+        'payment.usdt': 'USDT (TRC20)',
+        'payment.address': 'Wallet Address',
+        'payment.copy': 'Copy Address',
+        'payment.copied': 'Copied',
+        'payment.amount': 'Amount',
+        'payment.txHash': 'Transaction Hash',
+        'payment.txPlaceholder': 'Paste tx hash to confirm payment',
+        'payment.submit': 'Submit for Verification',
+        'payment.pending': 'Payment Pending Review',
+        'payment.pendingDesc': 'We have received your payment request. Usually confirmed and activated within 10-30 minutes.',
+        'payment.checkStatus': 'Check Order Status',
+        
+        // Profile
+        'profile.title': 'My Account',
+        'profile.subtitle': 'Manage your subscription and account settings',
+        'profile.tier': 'Current Plan',
+        'profile.expire': 'Expires',
+        'profile.upgrade': 'Upgrade Plan',
+        'profile.telegram': 'Telegram Binding',
+        'profile.telegramDesc': 'Receive real-time price alerts after binding',
+        'profile.bind': 'Bind Now',
+        'profile.bound': 'Bound',
+        'profile.settings': 'Account Settings',
+        
+        // Arbitrage
+        'arb.signalStrength': 'Signal Strength',
+        'arb.expectedReturn': 'Expected Return',
+        'arb.winRate': 'Historical Win Rate',
+        'arb.platforms': 'Platforms',
+        'arb.strategy': 'Strategy',
+        'arb.viewDetail': 'View Details',
+        
+        // Common
+        'common.loading': 'Loading...',
+        'common.noData': 'No data',
+        'common.volume': 'Volume',
+        'common.timeLeft': 'Time Left',
+        'common.change24h': '24h Change',
+        'common.yesProb': 'Yes Probability',
+        'common.market': 'Market',
+        'common.category': 'Category',
+      }
+    };
+
+    let currentLang = localStorage.getItem('predictedge_lang') || 'zh';
+
+    function t(key, params) {
+      let text = i18n[currentLang]?.[key] || i18n['zh']?.[key] || key;
+      if (params) {
+        Object.keys(params).forEach(k => {
+          text = text.replace(`{${k}}`, params[k]);
+        });
+      }
+      return text;
+    }
+
+    function setLang(lang) {
+      currentLang = lang;
+      localStorage.setItem('predictedge_lang', lang);
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+      document.title = lang === 'zh' 
+        ? 'PredictEdge — 预测市场智能套利平台'
+        : 'PredictEdge — AI-Powered Prediction Market Arbitrage';
+      render();
+    }
+
+    // ==================== 状态管理 ====================
+    const state = {
+      user: null,
+      token: localStorage.getItem('predictedge_token'),
+      events: [],
+      alerts: [],
+      arbitrageOpportunities: [],
+      currentCategory: 'all',
+      currentTab: 'markets',
+      isLoading: true,
+      selectedEvent: null,
+      showAuthModal: false,
+      authMode: 'login',
+      showPaymentModal: false,
+      selectedTier: null,
+      searchQuery: '',
+      currentOrder: null,
+      orderPollingTimer: null,
+      systemConfig: null,
+      unlockedEvents: [],
+      dailyUnlockLimit: 3
+    };
+
+    // ==================== 工具函数 ====================
+    function toast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const colors = {
+        info: 'bg-white/10 text-white border border-white/20',
+        success: 'bg-edge-500/20 text-edge-300 border border-edge-500/30',
+        error: 'bg-red-500/20 text-red-300 border border-red-500/30'
+      };
+      
+      const el = document.createElement('div');
+      el.className = `toast ${colors[type]} backdrop-blur-xl`;
+      el.textContent = message;
+      container.appendChild(el);
+      
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.3s';
+        setTimeout(() => el.remove(), 300);
+      }, 2500);
+    }
+
+    async function api(endpoint, options = {}) {
+      const headers = { 'Content-Type': 'application/json', ...options.headers };
+      if (state.token) {
+        headers['Authorization'] = `Bearer ${state.token}`;
+      }
+      
+      try {
+        const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+        if (res.status === 401) {
+          state.token = null;
+          state.user = null;
+          localStorage.removeItem('predictedge_token');
+          render();
+          throw new Error('未登录');
+        }
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || '请求失败');
+        }
+        return await res.json();
+      } catch (e) {
+        console.error('API Error:', e);
+        throw e;
+      }
+    }
+
+    function formatNumber(num) {
+      if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+      if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
+      return num.toString();
+    }
+
+    function formatTimeLeft(deadline) {
+      const now = new Date();
+      const end = new Date(deadline);
+      const diff = end - now;
+      
+      if (diff <= 0) return '已结束';
+      
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      
+      if (days > 0) return `${days}天${hours}小时`;
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      if (hours > 0) return `${hours}小时${minutes}分`;
+      return `${minutes}分钟`;
+    }
+
+    function formatTimeAgo(timestamp) {
+      const now = new Date();
+      const then = new Date(timestamp);
+      const diff = now - then;
+      
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 1) return '刚刚';
+      if (minutes < 60) return `${minutes}分钟前`;
+      
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}小时前`;
+      
+      const days = Math.floor(hours / 24);
+      return `${days}天前`;
+    }
+
+    function getCategoryLabel(cat) {
+      const map = { weather: '天气', crypto: '加密货币', sports: '体育', politics: '政治', other: '科技' };
+      return map[cat] || cat;
+    }
+
+    function getCategoryColor(cat) {
+      const map = {
+        weather: 'bg-sky-500/15 text-sky-400 border-sky-500/20',
+        crypto: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+        sports: 'bg-purple-500/15 text-purple-400 border-purple-500/20',
+        politics: 'bg-rose-500/15 text-rose-400 border-rose-500/20',
+        other: 'bg-blue-500/15 text-blue-400 border-blue-500/20'
+      };
+      return map[cat] || map.other;
+    }
+
+    function getCategoryIcon(cat) {
+      const map = { weather: '🌤️', crypto: '₿', sports: '⚽', politics: '🏛️', other: '🤖' };
+      return map[cat] || '📌';
+    }
+
+    // ==================== 认证函数 ====================
+    async function handleLogin(e) {
+      e.preventDefault();
+      const form = e.target;
+      const username = form.username.value.trim();
+      const password = form.password.value;
+      
+      if (!username || !password) {
+        toast('请填写用户名和密码', 'error');
+        return;
+      }
+      
+      try {
+        const data = await api('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ username, password })
+        });
+        state.token = data.access_token;
+        state.user = data.user;
+        localStorage.setItem('predictedge_token', state.token);
+        state.showAuthModal = false;
+        toast('登录成功', 'success');
+        await Promise.all([loadAlerts(), loadArbitrageData()]);
+        render();
+      } catch (e) {
+        toast(e.message || '登录失败', 'error');
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const form = e.target;
+      const username = form.username.value.trim();
+      const email = form.email.value.trim() || null;
+      const password = form.password.value;
+      
+      if (!username || !password) {
+        toast('请填写用户名和密码', 'error');
+        return;
+      }
+      
+      if (password.length < 6) {
+        toast('密码至少6位', 'error');
+        return;
+      }
+      
+      try {
+        const data = await api('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({ username, email, password })
+        });
+        state.token = data.access_token;
+        state.user = data.user;
+        localStorage.setItem('predictedge_token', state.token);
+        state.showAuthModal = false;
+        toast('注册成功', 'success');
+        await Promise.all([loadAlerts(), loadArbitrageData()]);
+        render();
+      } catch (e) {
+        toast(e.message || '注册失败', 'error');
+      }
+    }
+
+    function handleLogout() {
+      state.token = null;
+      state.user = null;
+      localStorage.removeItem('predictedge_token');
+      toast('已退出登录', 'info');
+      render();
+    }
+
+    // ==================== 分析引擎（前端） ====================
+    function analyzeEvent(event) {
+      const prob = event.probability;
+      const category = event.category;
+      const change = event.change || 0;
+      const volume = event.volume || 0;
+      
+      const accuracyMap = {
+        weather: 0.72, crypto: 0.55, sports: 0.68, politics: 0.62, other: 0.50
+      };
+      const historicalAccuracy = accuracyMap[category] || 0.50;
+      
+      const factors = [];
+      let totalWeight = 0;
+      
+      // 因子1: 极端概率均值回归 (30%)
+      if (prob > 85) {
+        factors.push({ adj: prob * 0.88, weight: 0.30, reason: '极端高概率(>85%)往往被高估，均值回归概率大' });
+      } else if (prob < 15) {
+        factors.push({ adj: prob * 1.25, weight: 0.30, reason: '极端低概率(<15%)往往被低估，黑天鹅赔率高' });
+      } else if (prob > 75) {
+        factors.push({ adj: prob * 0.94, weight: 0.20, reason: '高概率区(75-85%)存在轻微高估' });
+      } else if (prob < 25) {
+        factors.push({ adj: prob * 1.15, weight: 0.20, reason: '低概率区(15-25%)存在一定低估' });
+      } else {
+        factors.push({ adj: prob, weight: 0.15, reason: '中等区间定价相对合理' });
+      }
+      totalWeight += factors[factors.length - 1].weight;
+      
+      // 因子2: 动量效应 (20%)
+      if (change > 10) {
+        factors.push({ adj: Math.min(99, prob * 1.08), weight: 0.20, reason: '近期强势上涨(>10%)，动量效应继续推高' });
+      } else if (change > 5) {
+        factors.push({ adj: Math.min(99, prob * 1.04), weight: 0.15, reason: '近期上涨(5-10%)，短期动量偏多' });
+      } else if (change < -10) {
+        factors.push({ adj: Math.max(1, prob * 0.92), weight: 0.20, reason: '近期大幅下跌(>10%)，空头趋势明确' });
+      } else if (change < -5) {
+        factors.push({ adj: Math.max(1, prob * 0.96), weight: 0.15, reason: '近期下跌(5-10%)，短期动量偏空' });
+      } else {
+        factors.push({ adj: prob, weight: 0.10, reason: '近期横盘，无明显动量' });
+      }
+      totalWeight += factors[factors.length - 1].weight;
+      
+      // 因子3: 分类历史偏差 (25%)
+      const categoryBias = {
+        weather:  { low: 1.12, high: 0.95, tLow: 60, tHigh: 70 },
+        crypto:   { low: 1.08, high: 0.88, tLow: 40, tHigh: 65 },
+        sports:   { low: 1.18, high: 0.93, tLow: 35, tHigh: 65 },
+        politics: { low: 1.10, high: 0.85, tLow: 45, tHigh: 60 },
+        other:    { low: 1.05, high: 0.95, tLow: 40, tHigh: 60 }
+      };
+      const cb = categoryBias[category] || categoryBias.other;
+      const catLabel = getCategoryLabel(category);
+      if (prob < cb.tLow) {
+        factors.push({ adj: prob * cb.low, weight: 0.25, reason: `${catLabel}类事件低概率区历史上被低估` });
+      } else if (prob > cb.tHigh) {
+        factors.push({ adj: prob * cb.high, weight: 0.25, reason: `${catLabel}类事件高概率区历史上被高估` });
+      } else {
+        factors.push({ adj: prob, weight: 0.15, reason: '分类历史偏差影响较小' });
+      }
+      totalWeight += factors[factors.length - 1].weight;
+      
+      // 因子4: 交易量验证 (15%)
+      if (volume > 1000000) {
+        if (prob > 60) {
+          factors.push({ adj: prob * 0.97, weight: 0.15, reason: '高交易量高概率区易过度共识' });
+        } else if (prob < 40) {
+          factors.push({ adj: prob * 1.05, weight: 0.15, reason: '高交易量低概率区赔率更有吸引力' });
+        } else {
+          factors.push({ adj: prob, weight: 0.10, reason: '高交易量中等概率，定价较有效' });
+        }
+      } else if (volume > 100000) {
+        factors.push({ adj: prob, weight: 0.08, reason: '中等交易量，市场效率一般' });
+      } else {
+        if (prob > 70) {
+          factors.push({ adj: prob * 0.90, weight: 0.20, reason: '低流动性高概率事件易被高估' });
+        } else if (prob < 30) {
+          factors.push({ adj: prob * 1.15, weight: 0.20, reason: '低流动性低概率事件可能有信息差' });
+        } else {
+          factors.push({ adj: prob, weight: 0.12, reason: '低流动性中等概率，需谨慎' });
+        }
+      }
+      totalWeight += factors[factors.length - 1].weight;
+      
+      // 因子5: 时间衰减 (10%)
+      try {
+        const deadline = new Date(event.deadline);
+        const daysLeft = (deadline - new Date()) / 86400000;
+        if (daysLeft < 1) {
+          if (prob > 70) {
+            factors.push({ adj: prob * 0.95, weight: 0.10, reason: '临近结算高概率事件，late money效应拉低' });
+          } else if (prob < 30) {
+            factors.push({ adj: prob * 1.08, weight: 0.10, reason: '临近结算低概率事件，赔率价值更高' });
+          } else {
+            factors.push({ adj: prob, weight: 0.05, reason: '临近结算中等概率，波动较大' });
+          }
+        } else if (daysLeft < 7) {
+          factors.push({ adj: prob, weight: 0.08, reason: '一周内结算，时间价值适中' });
+        } else if (daysLeft > 90) {
+          if (prob > 60) {
+            factors.push({ adj: prob * 0.93, weight: 0.12, reason: '远期高概率事件不确定性大，通常高估' });
+          } else if (prob < 40) {
+            factors.push({ adj: prob * 1.10, weight: 0.12, reason: '远期低概率事件时间价值高，通常低估' });
+          } else {
+            factors.push({ adj: prob, weight: 0.08, reason: '远期中等概率，时间不确定性溢价' });
+          }
+        } else {
+          factors.push({ adj: prob, weight: 0.06, reason: '中期事件，时间因素影响一般' });
+        }
+      } catch (e) {
+        factors.push({ adj: prob, weight: 0.05, reason: '时间因素无法计算' });
+      }
+      totalWeight += factors[factors.length - 1].weight;
+      
+      // 加权平均
+      const weightedSum = factors.reduce((sum, f) => sum + f.adj * f.weight, 0);
+      let predicted = weightedSum / totalWeight;
+      predicted = Math.max(1.0, Math.min(99.0, predicted));
+      
+      const deviation = Math.round((prob - predicted) * 10) / 10;
+      
+      // 建议
+      let recommendation;
+      if (deviation > 8) recommendation = 'buy_no';
+      else if (deviation < -8) recommendation = 'buy_yes';
+      else if (deviation > 3) recommendation = 'lean_no';
+      else if (deviation < -3) recommendation = 'lean_yes';
+      else recommendation = 'hold';
+      
+      // 最主要原因
+      const mainReason = factors.reduce((a, b) => 
+        (Math.abs(a.adj - prob) * a.weight) > (Math.abs(b.adj - prob) * b.weight) ? a : b
+      );
+      
+      // 置信度
+      const confBase = historicalAccuracy * 100;
+      const volBonus = Math.min(15, volume / 100000);
+      const devBonus = Math.min(10, Math.abs(deviation));
+      const confidence = Math.min(95, Math.max(30, Math.round(confBase + volBonus + devBonus)));
+      
+      // 预期收益
+      const rrRatio = category === 'weather' || category === 'sports' ? 1.5 : 2.0;
+      const expectedProfit = Math.abs(deviation) < 2 ? 0 : Math.max(1.0, Math.abs(deviation) * rrRatio);
+      
+      return {
+        event_id: event.id,
+        predicted_probability: Math.round(predicted * 10) / 10,
+        market_probability: prob,
+        deviation: deviation,
+        confidence: confidence,
+        recommendation: recommendation,
+        reasoning: mainReason.reason,
+        expected_profit: Math.round(expectedProfit * 10) / 10,
+        factors_count: factors.length
+      };
+    }
+
+    function getArbitrageOpportunities() {
+      return state.events
+        .map(e => ({ event: e, analysis: analyzeEvent(e) }))
+        .filter(o => {
+          const rec = o.analysis.recommendation;
+          return rec !== 'hold' && Math.abs(o.analysis.deviation) >= 2;
+        })
+        .sort((a, b) => {
+          const sa = Math.abs(a.analysis.deviation) * 8 + a.analysis.confidence * 0.3;
+          const sb = Math.abs(b.analysis.deviation) * 8 + b.analysis.confidence * 0.3;
+          return sb - sa;
+        });
+    }
+
+    // ==================== 数据加载 ====================
+    async function loadData() {
+      state.isLoading = true;
+      render();
+      
+      try {
+        const data = await api(`/events?category=${state.currentCategory}&limit=100`);
+        state.events = data.events || [];
+      } catch (e) {
+        // 降级到模拟数据
+        state.events = getMockEvents();
+        filterByCategory();
+      }
+      
+      // 搜索过滤
+      if (state.searchQuery) {
+        const q = state.searchQuery.toLowerCase();
+        state.events = state.events.filter(e => 
+          e.title.toLowerCase().includes(q)
+        );
+      }
+      
+      state.isLoading = false;
+      render();
+    }
+
+    function filterByCategory() {
+      if (state.currentCategory !== 'all') {
+        state.events = state.events.filter(e => e.category === state.currentCategory);
+      }
+    }
+
+    async function loadAlerts() {
+      if (!state.token) return;
+      try {
+        const data = await api('/alerts?limit=50');
+        state.alerts = data.alerts || [];
+      } catch (e) {
+        state.alerts = getMockAlerts();
+      }
+    }
+
+    async function checkAuth() {
+      if (state.token) {
+        try {
+          const user = await api('/auth/me');
+          state.user = user;
+        } catch (e) {
+          state.token = null;
+          state.user = null;
+          localStorage.removeItem('predictedge_token');
+        }
+      }
+    }
+
+    function getMockEvents() {
+      const now = new Date();
+      const events = [];
+      
+      const crypto = [
+        ["BTC价格本周突破$70,000", 68.5, 1250000, 5, 5.2],
+        ["ETH价格本月突破$4000", 42.8, 892000, 14, -3.1],
+        ["SOL价格7天内突破$200", 55.8, 234000, 7, 8.7],
+        ["BNB价格本月突破$700", 38.2, 178000, 30, 2.5],
+        ["XRP价格7天内翻倍", 12.3, 456000, 7, -1.8],
+        ["DOGE本周涨幅超过20%", 28.5, 312000, 7, 15.2],
+        ["BTC ETF净流入本周超过$10亿", 72.1, 980000, 7, 4.3],
+        ["以太坊ETF本月获批", 75.2, 2340000, 14, 12.5],
+        ["SOLANA TVL本月突破$50亿", 58.3, 420000, 30, -2.1],
+        ["BTC年底达到$10万", 45.6, 3200000, 180, -5.2],
+        ["Layer2总TVL突破$200亿", 78.9, 234000, 60, 6.8],
+        ["Crypto总市值突破$3万亿", 52.1, 1560000, 90, -0.8],
+        ["下一次牛市BTC超过$15万", 62.7, 2100000, 365, 3.4],
+        ["Tether市值突破$1200亿", 82.3, 156000, 30, 1.2],
+        ["PEPE市值进入前10", 22.4, 567000, 90, 18.3],
+      ];
+      
+      const weather = [
+        ["纽约7月最高气温超过35°C", 75.5, 218200, 30, 5.2],
+        ["香港本周最高气温超过33°C", 68.2, 273200, 7, 12.5],
+        ["伦敦7月气温超过35°C", 38.2, 312900, 30, -5.8],
+        ["东京本周气温超过30°C", 89.5, 143300, 7, 0.5],
+        ["北京本周有暴雨红色预警", 32.1, 178000, 7, 8.3],
+        ["上海7月气温超过40°C", 45.6, 198000, 30, -2.5],
+        ["迈阿密本月有飓风登陆", 25.3, 456000, 30, 15.7],
+        ["加州本月野火超过1000英亩", 68.7, 234000, 60, -3.2],
+        ["悉尼本周气温超过25°C", 82.3, 145000, 7, 2.1],
+        ["迪拜本月气温超过50°C", 55.8, 89000, 30, 7.8],
+        ["新加坡本月降雨量超过200mm", 72.1, 123000, 30, 4.5],
+        ["深圳本月有台风登陆", 18.6, 289000, 60, -7.2],
+      ];
+      
+      const sports = [
+        ["2026世界杯冠军是阿根廷", 22.3, 5600000, 365, -1.2],
+        ["2026世界杯冠军是巴西", 18.5, 4500000, 365, 2.3],
+        ["2026世界杯冠军是法国", 15.7, 3800000, 365, -0.8],
+        ["NBA总冠军：凯尔特人", 58.4, 3450000, 10, -2.8],
+        ["NBA总冠军：独行侠", 41.6, 2800000, 10, 3.5],
+        ["梅西下赛季回巴萨", 28.9, 1200000, 90, 15.3],
+        ["C罗本赛季进球超过20个", 72.1, 980000, 180, -4.2],
+        ["F1总冠军：维斯塔潘", 65.3, 2100000, 180, 5.7],
+        ["奥运会男篮冠军：美国", 78.9, 1560000, 60, 2.1],
+        ["超级碗冠军：酋长", 32.5, 2300000, 180, -1.3],
+        ["C罗再踢一届世界杯", 55.7, 1800000, 365, 7.9],
+        ["网球温网冠军：德约科维奇", 45.2, 890000, 30, -8.5],
+      ];
+      
+      const politics = [
+        ["美国下任总统：特朗普", 45.6, 12500000, 180, 1.5],
+        ["美国下任总统：拜登", 38.2, 9800000, 180, -2.3],
+        ["英国首相今年换人", 62.3, 3400000, 180, 8.7],
+        ["欧盟通过新加密法规", 55.8, 1200000, 90, -3.2],
+        ["俄罗斯明年结束战争", 22.1, 5600000, 365, -5.4],
+        ["中国GDP今年增长5%+", 68.7, 2300000, 180, 3.6],
+        ["日本首相今年辞职", 41.5, 890000, 180, 12.1],
+        ["印度GDP超过英国", 78.3, 560000, 365, 1.8],
+      ];
+      
+      const other = [
+        ["GPT-5今年发布", 55.2, 1890000, 180, -6.3],
+        ["特斯拉FSD完全体今年推出", 38.7, 2340000, 180, 4.5],
+        ["苹果今年发布AR眼镜", 62.1, 1560000, 180, 7.8],
+        ["SpaceX星舰今年入轨", 48.9, 2800000, 180, -2.1],
+        ["全球AI监管法案通过", 72.3, 980000, 365, 3.4],
+        ["量子计算突破1000量子比特", 35.6, 670000, 365, 9.2],
+        ["TikTok在美国被禁", 28.4, 3400000, 90, -15.7],
+        ["OpenAI今年营收超$100亿", 82.1, 1200000, 180, 5.6],
+      ];
+      
+      function addEvents(list, category) {
+        list.forEach((item, i) => {
+          const [title, prob, vol, days, change] = item;
+          events.push({
+            id: `${category}_${i}`,
+            title: title + '?',
+            probability: prob,
+            volume: vol,
+            deadline: new Date(now.getTime() + days * 86400000).toISOString(),
+            category: category,
+            market: 'polymarket',
+            change: change
+          });
+        });
+      }
+      
+      addEvents(crypto, 'crypto');
+      addEvents(weather, 'weather');
+      addEvents(sports, 'sports');
+      addEvents(politics, 'politics');
+      addEvents(other, 'other');
+      
+      return events.sort((a, b) => b.volume - a.volume);
+    }
+
+    function getMockAlerts() {
+      const now = new Date();
+      return [
+        { id: 'a1', event_id: 'crypto_5', alert_type: 'spike', probability_before: 20, probability_after: 28.5, change: 8.5, message: '🔥 DOGE涨幅概率单日暴涨8.5%', priority: 'high', timestamp: new Date(now - 1800000).toISOString() },
+        { id: 'a2', event_id: 'crypto_7', alert_type: 'cross_threshold', probability_before: 70, probability_after: 75.2, change: 5.2, message: '⚡ 以太坊ETF批准概率突破75%', priority: 'high', timestamp: new Date(now - 3600000).toISOString() },
+        { id: 'a3', event_id: 'weather_1', alert_type: 'spike', probability_before: 58, probability_after: 68.2, change: 10.2, message: '🔥 香港高温概率大幅上涨10%', priority: 'high', timestamp: new Date(now - 7200000).toISOString() },
+        { id: 'a4', event_id: 'sports_5', alert_type: 'spike', probability_before: 18, probability_after: 28.9, change: 10.9, message: '🔥 梅西回巴萨概率单日涨10.9%', priority: 'medium', timestamp: new Date(now - 14400000).toISOString() },
+        { id: 'a5', event_id: 'crypto_4', alert_type: 'drop', probability_before: 16, probability_after: 12.3, change: -3.7, message: '📉 XRP翻倍概率继续下跌', priority: 'medium', timestamp: new Date(now - 28800000).toISOString() },
+        { id: 'a6', event_id: 'politics_2', alert_type: 'drop', probability_before: 42, probability_after: 38.2, change: -3.8, message: '📉 拜登连任概率小幅下滑', priority: 'medium', timestamp: new Date(now - 43200000).toISOString() },
+        { id: 'a7', event_id: 'other_6', alert_type: 'spike', probability_before: 15, probability_after: 28.4, change: 13.4, message: '🔥 TikTok被禁概率暴涨13%', priority: 'high', timestamp: new Date(now - 7200000).toISOString() },
+        { id: 'a8', event_id: 'crypto_0', alert_type: 'cross_threshold', probability_before: 68, probability_after: 70.2, change: 2.2, message: '⚡ BTC突破$7万概率突破70%', priority: 'medium', timestamp: new Date(now - 3600000).toISOString() },
+      ];
+    }
+
+    // ==================== 渲染函数 ====================
+    function render() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        ${renderNav()}
+        ${renderHero()}
+        ${renderFeatures()}
+        ${renderOpportunities()}
+        ${renderStrategies()}
+        ${renderStats()}
+        ${renderMain()}
+        ${renderPricing()}
+        ${renderFAQ()}
+        ${renderBottomCTA()}
+        ${renderFooter()}
+        ${renderBottomNav()}
+        ${state.showAuthModal ? renderAuthModal() : ''}
+        ${state.showPaymentModal ? renderPaymentModal() : ''}
+        ${state.selectedEvent ? renderEventModal() : ''}
+      `;
+    }
+
+    function renderNav() {
+      return `
+        <nav class="sticky top-0 z-50 bg-[#0a0a0b]/80 backdrop-blur-xl border-b border-white/5">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+              <!-- 左侧品牌区 -->
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-edge-400 to-edge-600 flex items-center justify-center font-bold text-black text-lg shadow-lg shadow-edge-500/20">
+                  PE
+                </div>
+                <div>
+                  <div class="font-bold text-lg tracking-tight">PredictEdge</div>
+                  <div class="text-[10px] text-white/40 -mt-0.5">预测市场智能套利</div>
+                </div>
+              </div>
+              
+              <!-- 中间导航区 -->
+              <div class="hidden md:flex items-center gap-8">
+                <a href="#markets-section" onclick="state.currentTab='markets';document.getElementById('markets-section').scrollIntoView({behavior:'smooth'});render();return false;" class="text-sm text-white/60 hover:text-white transition-colors">${t('nav.markets')}</a>
+                <a href="#arbitrage-section" onclick="state.currentTab='arbitrage';document.getElementById('arbitrage-section').scrollIntoView({behavior:'smooth'});render();return false;" class="text-sm text-white/60 hover:text-white transition-colors">${t('nav.arbitrage')}</a>
+                <a href="#strategy" class="text-sm text-white/60 hover:text-white transition-colors">${t('nav.analysis')}</a>
+                <a href="#pricing-section" onclick="document.getElementById('pricing-section').scrollIntoView({behavior:'smooth'});return false;" class="text-sm text-white/60 hover:text-white transition-colors">${t('nav.pricing')}</a>
+              </div>
+              
+              <!-- 右侧操作区 -->
+              <div class="flex items-center gap-3">
+                <button onclick="setLang(currentLang === 'zh' ? 'en' : 'zh')" class="text-sm text-white/40 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/5">
+                  ${currentLang === 'zh' ? 'EN' : '中'}
+                </button>
+                ${state.user ? `
+                  <div class="flex items-center gap-2">
+                    <div class="hidden sm:block text-sm text-white/60">${state.user.username}</div>
+                    <button onclick="handleLogout()" class="text-sm text-white/40 hover:text-white transition-colors">${t('nav.logout')}</button>
+                  </div>
+                ` : `
+                  <button onclick="state.authMode='login';state.showAuthModal=true;render()" class="text-sm text-white/60 hover:text-white transition-colors">${t('nav.login')}</button>
+                  <button onclick="state.authMode='register';state.showAuthModal=true;render()" class="px-4 py-2 bg-edge-500 hover:bg-edge-400 text-black text-sm font-semibold rounded-lg transition-all hover:scale-105">
+                    ${t('nav.register')}
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>
+        </nav>
+      `;
+    }
+
+    function renderHero() {
+      return `
+        <section class="relative overflow-hidden pt-10 pb-12 sm:pt-16 sm:pb-16 lg:pt-24 lg:pb-20">
+          <!-- 背景光晕 -->
+          <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute -top-20 left-1/4 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] bg-edge-500/10 rounded-full blur-[80px] sm:blur-[100px] animate-pulse-slow"></div>
+            <div class="absolute bottom-0 right-0 w-[250px] h-[250px] sm:w-[400px] sm:h-[400px] bg-purple-500/10 rounded-full blur-[80px]"></div>
+          </div>
+          
+          <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto">
+              
+              <!-- 实时监控标签 -->
+              <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass mb-6 sm:mb-8">
+                <span class="w-1.5 h-1.5 rounded-full bg-edge-500 animate-pulse"></span>
+                <span class="text-xs sm:text-sm text-white/70">${t('hero.badge')}</span>
+              </div>
+              
+              <!-- 主标题 - 按豆包方案 -->
+              <h1 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight leading-[1.15] mb-6 sm:mb-8">
+                <span class="block">${t('hero.title1')}</span>
+                <span class="block gradient-text">${t('hero.title2')}</span>
+              </h1>
+              
+              <!-- 副标题 - 豆包原版 -->
+              <p class="text-base sm:text-lg lg:text-xl text-white/60 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
+                ${t('hero.subtitle')}
+              </p>
+              
+              <!-- 双CTA按钮 - 优化版A方案 -->
+              <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-8">
+                <!-- 主按钮：解锁3个套利机会预览 -->
+                <button onclick="state.authMode='register';state.showAuthModal=true;render()" class="w-full sm:w-auto group relative px-6 sm:px-8 py-3.5 sm:py-4 bg-edge-500 hover:bg-edge-400 text-black text-sm sm:text-base font-bold rounded-xl transition-all hover:scale-[1.02] shadow-lg shadow-edge-500/30">
+                  <span class="flex items-center justify-center gap-2">
+                    ${t('hero.cta1')}
+                    <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                  </span>
+                </button>
+                
+                <!-- 次按钮：浏览全市场行情 -->
+                <button onclick="document.getElementById('markets-section').scrollIntoView({behavior:'smooth'})" class="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 glass glass-hover text-white font-medium rounded-xl transition-all text-sm sm:text-base">
+                  ${t('hero.cta2')}
+                </button>
+              </div>
+              
+              <!-- 信任条 - 已融入顶部标签 -->
+              <div class="text-xs text-white/40 mt-4">
+                <span class="inline-flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-edge-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  ${t('hero.note')}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    // ==================== 模块3：核心能力亮点区 ====================
+    function renderFeatures() {
+      const features = [
+        {
+          icon: '⚡',
+          title: t('why.1.title'),
+          desc: t('why.1.desc')
+        },
+        {
+          icon: '🧠',
+          title: t('why.2.title'),
+          desc: t('why.2.desc')
+        },
+        {
+          icon: '🛡️',
+          title: t('why.3.title'),
+          desc: t('why.3.desc')
+        }
+      ];
+      
+      return `
+        <section class="py-12 sm:py-16 lg:py-20">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8 sm:mb-12">
+              <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold mb-3">${t('why.title')}</h2>
+              <p class="text-white/50 text-sm sm:text-base">${t('why.subtitle')}</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+              ${features.map((f, i) => `
+                <div class="group glass rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-1 hover:border-edge-500/30 hover:shadow-lg hover:shadow-edge-500/5">
+                  <div class="w-12 h-12 rounded-xl bg-edge-500/10 flex items-center justify-center text-2xl mb-5 group-hover:scale-110 transition-transform">
+                    ${f.icon}
+                  </div>
+                  <h3 class="text-lg font-bold mb-3">${f.title}</h3>
+                  <p class="text-sm text-white/60 leading-relaxed">${f.desc}</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    // ==================== 模块4：实时套利机会展示区 ====================
+    async function loadArbitrageData() {
+      if (!state.user) return;
+      try {
+        const token = localStorage.getItem('predictedge_token');
+        const resp = await fetch('/api/arbitrage', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await resp.json();
+        state.arbitrageOpportunities = data.opportunities || [];
+      } catch (e) {
+        console.error('加载套利数据失败', e);
+      }
+    }
+
+    function renderOpportunities() {
+      const riskColors = { low: 'bg-edge-500/20 text-edge-400', medium: 'bg-blue-500/20 text-blue-400', high: 'bg-amber-500/20 text-amber-400' };
+      const riskLabels = { low: '低风险', medium: '中风险', high: '高风险' };
+
+      let opportunities = [];
+      let isProUser = state.user && (state.user.subscription_tier === 'pro' || state.user.subscription_tier === 'agency');
+      let isLoggedIn = !!state.user;
+
+      if (isProUser && state.arbitrageOpportunities && state.arbitrageOpportunities.length > 0) {
+        opportunities = state.arbitrageOpportunities.slice(0, 3).map(op => ({
+          id: op.id,
+          type: op.type === 'undervalued' ? '低估套利' : '高估套利',
+          event: op.event?.title || '未知事件',
+          profit: op.estimated_profit?.toFixed(1) + '%' || '0%',
+          window: '实时',
+          platforms: ['Polymarket'],
+          risk: op.risk_level || 'medium',
+          locked: '完整策略 + 入场点位',
+          signal_quality: op.signal_quality,
+          win_rate: op.estimated_win_rate
+        }));
+      } else if (isLoggedIn) {
+        opportunities = [
+          {
+            id: 1,
+            type: '跨平台价差套利',
+            event: '今日高胜率机会',
+            profit: '2.3%',
+            window: '22天',
+            platforms: ['Polymarket', 'Manifold'],
+            risk: 'low',
+            locked: '升级专业版查看详情',
+            signal_quality: null
+          },
+          {
+            id: 2,
+            type: 'Dutch Book 套利',
+            event: '市场定价偏差',
+            profit: '1.8%',
+            window: '3天',
+            platforms: ['Kalshi', 'Polymarket'],
+            risk: 'low',
+            locked: '升级专业版查看详情',
+            signal_quality: null
+          },
+          {
+            id: 3,
+            type: '关联事件套利',
+            event: '关联机会',
+            profit: '3.2%',
+            window: '16天',
+            platforms: ['Polymarket'],
+            risk: 'medium',
+            locked: '升级专业版查看详情',
+            signal_quality: null
+          }
+        ];
+      } else {
+        opportunities = [
+          {
+            id: 1,
+            type: '跨平台价差套利',
+            event: '2026 世界杯 韩国队夺冠',
+            profit: '2.3%',
+            window: '22天 18小时',
+            platforms: ['Polymarket', 'Manifold'],
+            risk: 'low',
+            locked: '入场点位 + 仓位分配方案',
+            signal_quality: null
+          },
+          {
+            id: 2,
+            type: 'Dutch Book 套利',
+            event: '美联储 6 月降息 25bp',
+            profit: '1.1%',
+            window: '3天 4小时',
+            platforms: ['Kalshi', 'Polymarket'],
+            risk: 'low',
+            locked: '双边建仓比例 + 操作步骤',
+            signal_quality: null
+          },
+          {
+            id: 3,
+            type: '关联事件套利',
+            event: 'BTC 年底突破 10 万美金',
+            profit: '3.7%',
+            window: '16天 7小时',
+            platforms: ['Polymarket'],
+            risk: 'medium',
+            locked: '完整策略 + 自动跟单',
+            signal_quality: null
+          }
+        ];
+      }
+
+      function getCardClickAction(op) {
+        if (isProUser) {
+          return `state.currentTab='arbitrage';document.getElementById('markets-section').scrollIntoView({behavior:'smooth'});render()`;
+        } else if (isLoggedIn) {
+          return `document.getElementById('pricing').scrollIntoView({behavior:'smooth'})`;
+        }
+        return `state.authMode='register';state.showAuthModal=true;render()`;
+      }
+
+      function getLockedText(op) {
+        if (isProUser) {
+          return `<span class="text-edge-400">【已解锁】</span>${op.locked}`;
+        } else if (isLoggedIn) {
+          return `<span class="text-amber-400">【升级解锁】</span>${op.locked}`;
+        }
+        return `<span class="text-edge-400">【注册解锁】</span>${op.locked}`;
+      }
+
+      function getMoreButton() {
+        if (isProUser) {
+          return `
+                <button onclick="state.currentTab='arbitrage';document.getElementById('markets-section').scrollIntoView({behavior:'smooth'});render()" class="text-sm text-edge-400 hover:text-edge-300 transition-colors inline-flex items-center gap-1">
+                  查看全部套利机会
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                  </svg>
+                </button>
+          `;
+        } else if (isLoggedIn) {
+          return `
+                <button onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" class="text-sm text-amber-400 hover:text-amber-300 transition-colors inline-flex items-center gap-1">
+                  升级专业版解锁全部套利机会
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                  </svg>
+                </button>
+          `;
+        }
+        return `
+                <button onclick="state.authMode='register';state.showAuthModal=true;render()" class="text-sm text-edge-400 hover:text-edge-300 transition-colors inline-flex items-center gap-1">
+                  注册查看更多套利机会
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                  </svg>
+                </button>
+        `;
+      }
+
+      return `
+        <section id="arbitrage-section" class="py-12 sm:py-16 lg:py-20 bg-gradient-to-b from-transparent via-edge-500/5 to-transparent">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8 sm:mb-12">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-edge-500/10 text-edge-400 text-xs mb-4">
+                <span class="w-1.5 h-1.5 rounded-full bg-edge-500 animate-pulse"></span>
+                实时捕捉 · 可执行
+              </div>
+              <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold mb-3">今日实时捕捉・可执行套利机会</h2>
+              <p class="text-white/50 text-sm sm:text-base">所有机会均已扣除手续费与滑点成本，仅展示净收益为正的标的</p>
+              ${isProUser ? `<p class="text-edge-400 text-xs mt-2">已解锁全部高级功能</p>` : ''}
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+              ${opportunities.map(op => `
+                <div onclick="${getCardClickAction(op)}" class="glass rounded-2xl p-5 sm:p-6 relative overflow-hidden group hover:border-edge-500/30 transition-all duration-300 cursor-pointer">
+                  <!-- 风险标签 -->
+                  <div class="absolute top-4 right-4">
+                    <span class="text-[10px] font-semibold px-2 py-1 rounded-full ${riskColors[op.risk]}">${riskLabels[op.risk]}</span>
+                  </div>
+                  
+                  <!-- 类型标签 -->
+                  <div class="text-[10px] text-edge-400 font-medium mb-3">${op.type}</div>
+                  
+                  <!-- 事件名称 -->
+                  <h3 class="font-bold text-base mb-4 pr-16">${op.event}</h3>
+                  
+                  <!-- 关键数据 -->
+                  <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-white/5 rounded-lg p-3 text-center">
+                      <div class="text-[10px] text-white/40 mb-1">预期净收益</div>
+                      <div class="text-lg font-bold text-edge-400">+${op.profit}</div>
+                    </div>
+                    <div class="bg-white/5 rounded-lg p-3 text-center">
+                      <div class="text-[10px] text-white/40 mb-1">有效窗口</div>
+                      <div class="text-sm font-medium">${op.window}</div>
+                    </div>
+                  </div>
+
+                  ${op.win_rate ? `
+                  <div class="bg-white/5 rounded-lg p-3 mb-4">
+                    <div class="text-[10px] text-white/40 mb-1">预期胜率</div>
+                    <div class="text-sm font-bold text-emerald-400">${op.win_rate}%</div>
+                  </div>
+                  ` : ''}
+                  
+                  <!-- 涉及平台 -->
+                  <div class="text-xs text-white/40 mb-4">
+                    <span class="opacity-50">涉及平台：</span>${op.platforms.join(' / ')}
+                  </div>
+                  
+                  <!-- 锁定区域 -->
+                  <div class="border-t border-white/5 pt-4">
+                    <div class="relative">
+                      <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-[#0a0a0b]/80 to-transparent z-10 rounded-b-xl"></div>
+                      <div class="text-xs text-white/50 text-center py-2">
+                        ${getLockedText(op)}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- 悬停效果 -->
+                  <div class="absolute inset-0 bg-edge-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none"></div>
+                </div>
+              `).join('')}
+            </div>
+            
+            <!-- 更多机会提示 -->
+            <div class="text-center mt-8">
+              ${getMoreButton()}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    // ==================== 模块5：套利策略原理区 ====================
+    function renderStrategies() {
+      const strategies = [
+        {
+          name: t('strategy.1.title'),
+          desc: t('strategy.1.desc'),
+          icon: '⚖️'
+        },
+        {
+          name: t('strategy.2.title'),
+          desc: t('strategy.2.desc'),
+          icon: '🔄'
+        },
+        {
+          name: t('strategy.3.title'),
+          desc: t('strategy.3.desc'),
+          icon: '🔗'
+        }
+      ];
+      
+      return `
+        <section id="strategy" class="py-12 sm:py-16 lg:py-20">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8 sm:mb-12">
+              <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold mb-3">${t('strategy.title')}</h2>
+              <p class="text-white/50 text-sm sm:text-base">${t('strategy.subtitle')}</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+              ${strategies.map((s, i) => `
+                <div class="glass rounded-2xl p-6 sm:p-8">
+                  <div class="text-4xl mb-5">${s.icon}</div>
+                  <h3 class="text-lg font-bold mb-3">${s.name}</h3>
+                  <p class="text-sm text-white/60 leading-relaxed">${s.desc}</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    // ==================== 模块6：实盘数据背书区 ====================
+    function renderStats() {
+      const stats = [
+        { value: '28.6%', label: '历史策略年化收益', note: '2025年实盘+回测均值，不代表未来收益', highlight: true },
+        { value: '1270+', label: '累计捕捉套利机会', note: '覆盖体育、政治、加密、科技全品类' },
+        { value: '3.2%', label: '策略最大回撤', note: '严格风控下的历史最大浮亏' },
+        { value: '6+', label: '覆盖全球预测平台', note: '持续接入更多主流市场' }
+      ];
+      
+      return `
+        <section class="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-transparent via-edge-500/5 to-transparent">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              ${stats.map(s => `
+                <div class="text-center">
+                  <div class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 ${s.highlight ? 'gradient-text' : ''}">${s.value}</div>
+                  <div class="text-sm font-medium mb-1">${s.label}</div>
+                  <div class="text-[10px] text-white/40">${s.note}</div>
+                </div>
+              `).join('')}
+            </div>
+            
+            <!-- 合规提示 -->
+            <div class="mt-8 text-center">
+              <p class="text-xs text-white/30">⚠️ 预测市场交易存在本金损失风险，请您根据自身风险承受能力谨慎参与。PredictEdge 仅为数据工具与策略分析平台，不提供任何投资建议与保本承诺。</p>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderMain() {
+      const tabs = [
+        { id: 'markets', label: t('tab.markets'), icon: '📊' },
+        { id: 'alerts', label: t('tab.alerts'), icon: '🔔' },
+        { id: 'analysis', label: t('tab.analysis'), icon: '📈' },
+        { id: 'arbitrage', label: t('tab.arbitrage'), icon: '💎', pro: true },
+      ];
+      
+      return `
+        <main id="markets-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-safe">
+          <!-- 标签栏 -->
+          <div class="flex items-center gap-1 border-b border-white/5 mb-4 sm:mb-6 overflow-x-auto scrollbar-thin hide-scrollbar">
+            ${tabs.map(tab => `
+              <button 
+                onclick="switchTab('${tab.id}')"
+                class="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${state.currentTab === tab.id ? 'tab-active' : 'text-white/50 hover:text-white/80'}"
+              >
+                <span>${tab.icon}</span>
+                <span>${tab.label}</span>
+                ${tab.pro ? '<span class="badge bg-edge-500/20 text-edge-400 border-0 hidden sm:inline-flex">PRO</span>' : ''}
+              </button>
+            `).join('')}
+          </div>
+          
+          <!-- 分类筛选 + 搜索 -->
+          ${(state.currentTab === 'markets' || state.currentTab === 'analysis') ? renderFilterBar() : ''}
+          
+          <!-- 内容区 -->
+          <div class="mt-4 sm:mt-6" id="${state.currentTab}-section">
+            ${state.isLoading ? renderLoading() : renderTabContent()}
+          </div>
+        </main>
+      `;
+    }
+
+    function renderFilterBar() {
+      const cats = [
+        { id: 'all', label: t('cat.all') },
+        { id: 'crypto', label: t('cat.crypto'), icon: '₿' },
+        { id: 'weather', label: t('cat.weather'), icon: '🌤️' },
+        { id: 'sports', label: t('cat.sports'), icon: '⚽' },
+        { id: 'politics', label: t('cat.politics'), icon: '🏛️' },
+        { id: 'other', label: t('cat.tech'), icon: '🤖' },
+      ];
+      
+      return `
+        <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-thin hide-scrollbar flex-1">
+            ${cats.map(cat => `
+              <button 
+                onclick="switchCategory('${cat.id}')"
+                class="flex items-center gap-1 px-3 py-1.5 text-[11px] sm:text-xs font-medium rounded-full whitespace-nowrap transition-all ${state.currentCategory === cat.id 
+                  ? 'bg-edge-500 text-black' 
+                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'}"
+              >
+                ${cat.icon ? `<span>${cat.icon}</span>` : ''}
+                <span>${cat.label}</span>
+              </button>
+            `).join('')}
+          </div>
+          
+          <div class="relative">
+            <input 
+              type="text" 
+              placeholder="${t('search.placeholder')}" 
+              value="${state.searchQuery}"
+              oninput="handleSearch(event)"
+              class="w-full sm:w-48 pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-white/30 focus:outline-none focus:border-edge-500/50 transition-colors"
+            />
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">🔍</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLoading() {
+      return `
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          ${Array(6).fill(0).map(() => `
+            <div class="glass rounded-xl p-4 sm:p-5">
+              <div class="skeleton h-3 w-1/3 rounded mb-3"></div>
+              <div class="skeleton h-5 w-full rounded mb-4"></div>
+              <div class="skeleton h-4 w-full rounded mb-3"></div>
+              <div class="flex justify-between">
+                <div class="skeleton h-3 w-16 rounded"></div>
+                <div class="skeleton h-3 w-12 rounded"></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderTabContent() {
+      switch(state.currentTab) {
+        case 'markets': return renderMarkets();
+        case 'alerts': return renderAlertsTab();
+        case 'analysis': return renderAnalysis();
+        case 'arbitrage': return renderArbitrage();
+        default: return renderMarkets();
+      }
+    }
+
+    function renderMarkets() {
+      if (state.events.length === 0) {
+        return `
+          <div class="text-center py-16 sm:py-20">
+            <div class="text-4xl mb-4">📭</div>
+            <div class="text-white/60 text-sm">暂无事件数据</div>
+          </div>
+        `;
+      }
+      
+      return `
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          ${state.events.slice(0, state.events.length).map(event => renderEventCard(event)).join('')}
+        </div>
+      `;
+    }
+
+    function renderEventCard(event) {
+      const isUp = event.change > 0;
+      const prob = event.probability;
+      const unlocked = isEventUnlocked(event.id);
+      const isPro = state.user && (state.user.subscription_tier === 'pro' || state.user.subscription_tier === 'agency');
+      
+      return `
+        <div 
+          onclick="openEvent('${event.id}')"
+          class="glass glass-hover rounded-xl p-4 sm:p-5 cursor-pointer transition-all active:scale-[0.98] hover:scale-[1.01] group relative"
+        >
+          ${unlocked ? `<div class="absolute top-2 right-2 text-[9px] text-edge-400">✓ 已解锁</div>` : ''}
+          ${!unlocked && state.user && !isPro ? `<div class="absolute top-2 right-2 text-[9px] text-white/40">🔒</div>` : ''}
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <span class="badge ${getCategoryColor(event.category)} border">
+              <span class="mr-1">${getCategoryIcon(event.category)}</span>
+              ${getCategoryLabel(event.category)}
+            </span>
+            <span class="text-[10px] text-white/40 flex items-center gap-1 shrink-0">
+              <span class="w-1.5 h-1.5 rounded-full bg-edge-500"></span>
+              ${formatTimeLeft(event.deadline)}
+            </span>
+          </div>
+          
+          <h3 class="font-semibold text-sm leading-snug mb-3 group-hover:text-edge-300 transition-colors line-clamp-2 min-h-[40px]">
+            ${event.title}
+          </h3>
+          
+          <!-- 概率条 -->
+          <div class="mb-2">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] text-white/50">Yes 概率</span>
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-sm ${prob > 50 ? 'text-edge-400' : 'text-red-400'}">${prob}%</span>
+                <span class="text-[10px] ${isUp ? 'text-edge-400' : 'text-red-400'} font-medium">
+                  ${isUp ? '▲' : '▼'}${Math.abs(event.change)}%
+                </span>
+              </div>
+            </div>
+            <div class="prob-bar-bg h-1.5 rounded-full overflow-hidden">
+              <div 
+                class="h-full rounded-full transition-all duration-500 ${prob > 50 ? 'bg-gradient-to-r from-edge-600 to-edge-400' : 'bg-gradient-to-r from-red-600 to-red-400'}"
+                style="width: ${prob}%"
+              ></div>
+            </div>
+          </div>
+          
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-white/40">${event.market}</span>
+            <span class="font-mono text-white/50">$${formatNumber(event.volume)}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAlertsTab() {
+      if (!state.user) {
+        return renderPaywall('价格警报', '登录后查看实时价格警报，第一时间捕捉市场情绪变化', '🔔');
+      }
+      
+      if (state.user.subscription_tier === 'free') {
+        return renderPaywall('价格警报', '升级到基础版即可解锁实时价格警报功能，不错过任何异动机会', '🔔');
+      }
+      
+      const alerts = state.alerts.length > 0 ? state.alerts : getMockAlerts();
+      
+      if (alerts.length === 0) {
+        return `
+          <div class="text-center py-16 sm:py-20">
+            <div class="text-4xl mb-4">🔕</div>
+            <div class="text-white/60 text-sm">暂无警报</div>
+            <div class="text-white/40 text-xs mt-2">当市场出现大幅波动时，这里会显示警报</div>
+          </div>
+        `;
+      }
+      
+      return `
+        <div class="space-y-2.5 sm:space-y-3">
+          ${alerts.map(alert => `
+            <div class="glass rounded-xl p-3.5 sm:p-4 ${alert.priority === 'high' ? 'border-red-500/20' : ''}">
+              <div class="flex items-start gap-3">
+                <div class="text-xl sm:text-2xl">${alert.alert_type === 'spike' ? '🔥' : alert.alert_type === 'drop' ? '📉' : '⚡'}</div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-sm mb-1">${alert.message}</div>
+                  <div class="flex items-center gap-3 sm:gap-4 text-[11px] text-white/40 flex-wrap">
+                    <span class="font-mono">${alert.probability_before}% → ${alert.probability_after}%</span>
+                    <span>${formatTimeAgo(alert.timestamp)}</span>
+                  </div>
+                </div>
+                <span class="badge ${alert.priority === 'high' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'} shrink-0">
+                  ${alert.priority === 'high' ? '高' : '中'}
+                </span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderAnalysis() {
+      const events = state.events.slice(0, 15);
+      
+      if (events.length === 0) {
+        return `
+          <div class="text-center py-16 sm:py-20">
+            <div class="text-4xl mb-4">📊</div>
+            <div class="text-white/60 text-sm">暂无分析数据</div>
+          </div>
+        `;
+      }
+      
+      return `
+        <div class="space-y-3 sm:space-y-4">
+          ${events.map(event => {
+            const analysis = analyzeEvent(event);
+            const rec = analysis.recommendation;
+            return `
+              <div onclick="openEvent('${event.id}')" class="glass glass-hover rounded-xl p-4 sm:p-5 cursor-pointer transition-all active:scale-[0.98]">
+                <div class="flex items-start justify-between gap-3 mb-3 sm:mb-4">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-2">
+                      <span class="badge ${getCategoryColor(event.category)} border">
+                        ${getCategoryIcon(event.category)} ${getCategoryLabel(event.category)}
+                      </span>
+                    </div>
+                    <h3 class="font-semibold text-sm leading-snug line-clamp-2">${event.title}</h3>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <div class="font-mono font-bold text-lg sm:text-xl ${rec === 'buy_yes' ? 'text-edge-400' : rec === 'buy_no' ? 'text-red-400' : 'text-white/60'}">
+                      ${analysis.predicted_probability}%
+                    </div>
+                    <div class="text-[10px] text-white/40">预测概率</div>
+                  </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <div class="bg-white/5 rounded-lg p-2.5 sm:p-3 text-center">
+                    <div class="font-bold text-sm sm:text-base">${event.probability}%</div>
+                    <div class="text-[9px] sm:text-[10px] text-white/40 mt-0.5">市场概率</div>
+                  </div>
+                  <div class="bg-white/5 rounded-lg p-2.5 sm:p-3 text-center">
+                    <div class="font-bold text-sm sm:text-base ${analysis.deviation > 0 ? 'text-edge-400' : 'text-red-400'}">
+                      ${analysis.deviation > 0 ? '+' : ''}${analysis.deviation}%
+                    </div>
+                    <div class="text-[9px] sm:text-[10px] text-white/40 mt-0.5">偏差值</div>
+                  </div>
+                  <div class="bg-white/5 rounded-lg p-2.5 sm:p-3 text-center">
+                    <div class="font-bold text-sm sm:text-base text-amber-400">${analysis.confidence}%</div>
+                    <div class="text-[9px] sm:text-[10px] text-white/40 mt-0.5">置信度</div>
+                  </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                  <span class="flex-1 text-[11px] sm:text-xs text-white/50 line-clamp-2">${analysis.reasoning}</span>
+                  <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap ${
+                    rec === 'buy_yes' 
+                      ? 'bg-edge-500/20 text-edge-400 border border-edge-500/30' 
+                      : rec === 'buy_no'
+                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        : 'bg-white/10 text-white/60'
+                  }">
+                    ${rec === 'buy_yes' ? '做多 YES' : rec === 'buy_no' ? '做空 YES' : '观望'}
+                  </span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    // ==================== 模块8：FAQ区 ====================
+    function renderFAQ() {
+      const faqs = [
+        {
+          q: '套利是稳赚不赔的吗？',
+          a: '不是。Dutch Book 类策略理论上为无风险套利，但实际交易中仍可能受流动性、滑点、平台规则变动等因素影响，存在本金损失风险。PredictEdge 仅提供工具辅助与信号参考，不构成任何投资建议。'
+        },
+        {
+          q: '使用需要绑定我的交易账户资产吗？',
+          a: '不需要。基础版仅提供信号与数据，PRO 版的自动交易需用户自行授权 API 密钥，资产始终保留在您的平台账户中，我们无法划转您的资金。'
+        },
+        {
+          q: '支持哪些预测市场平台？',
+          a: '目前已接入 Polymarket、Manifold、Kalshi，后续将持续接入更多全球主流预测市场平台。'
+        },
+        {
+          q: '新手不会操作怎么办？',
+          a: '每个套利信号均附带详细的分步操作指南，同时我们提供社区答疑与新手入门教程，零基础也可快速上手。'
+        }
+      ];
+      
+      return `
+        <section class="py-12 sm:py-16 lg:py-20">
+          <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8 sm:mb-12">
+              <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold mb-3">${t('faq.title')}</h2>
+              <p class="text-white/50 text-sm sm:text-base">${t('faq.subtitle')}</p>
+            </div>
+            
+            <div class="space-y-3">
+              ${faqs.map((faq, i) => `
+                <div class="glass rounded-xl overflow-hidden" x-data="{ open: false }">
+                  <button 
+                    onclick="toggleFAQ(${i})"
+                    class="w-full flex items-center justify-between p-5 text-left hover:bg-white/5 transition-colors"
+                  >
+                    <span class="font-medium text-sm sm:text-base pr-4">${faq.q}</span>
+                    <svg class="w-5 h-5 text-white/40 shrink-0 transition-transform faq-icon-${i}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  <div class="faq-content-${i} hidden px-5 pb-5">
+                    <p class="text-sm text-white/60 leading-relaxed">${faq.a}</p>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+    
+    function toggleFAQ(index) {
+      const content = document.querySelector(`.faq-content-${index}`);
+      const icon = document.querySelector(`.faq-icon-${index}`);
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+      } else {
+        content.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    // ==================== 模块9：底部CTA ====================
+    function renderBottomCTA() {
+      return `
+        <section class="py-12 sm:py-16 lg:py-20">
+          <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="relative overflow-hidden rounded-3xl p-8 sm:p-12 lg:p-16 text-center" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.05) 100%); border: 1px solid rgba(34, 197, 94, 0.2);">
+              <!-- 装饰 -->
+              <div class="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-edge-500/20 rounded-full blur-[80px] pointer-events-none"></div>
+              
+              <div class="relative">
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">${t('cta.title')}</h2>
+                <p class="text-white/60 text-sm sm:text-base mb-8 max-w-xl mx-auto">
+                  ${t('cta.subtitle')}
+                </p>
+                <button onclick="state.authMode='register';state.showAuthModal=true;render()" class="group px-8 py-4 bg-edge-500 hover:bg-edge-400 text-black text-base font-bold rounded-xl transition-all hover:scale-[1.02] shadow-lg shadow-edge-500/30">
+                  <span class="flex items-center justify-center gap-2">
+                    ${t('cta.button')}
+                    <svg class="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderArbitrage() {
+      if (!state.user) {
+        return renderPaywall('套利信号', '登录后查看专业版AI套利信号，自动检测被错误定价的事件', '💎');
+      }
+      
+      if (state.user.subscription_tier !== 'pro' && state.user.subscription_tier !== 'agency') {
+        return renderPaywall('套利信号', '升级到专业版即可解锁AI套利信号，自动扫描全市场定价偏差', '💎');
+      }
+      
+      const opportunities = getArbitrageOpportunities();
+      
+      if (opportunities.length === 0) {
+        return `
+          <div class="text-center py-16 sm:py-20">
+            <div class="text-4xl mb-4">🔍</div>
+            <div class="text-white/60 text-sm">暂未检测到明显套利机会</div>
+            <div class="text-white/40 text-xs mt-2">AI正在持续监控市场...</div>
+          </div>
+        `;
+      }
+      
+      return `
+        <div class="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <span class="text-sm font-medium">发现 <span class="text-edge-400">${opportunities.length}</span> 个套利机会</span>
+            <span class="text-xs text-white/40 ml-2">5因子模型分析</span>
+          </div>
+          <span class="text-xs text-white/40">按信号强度排序</span>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          ${opportunities.slice(0, 16).map((op, i) => {
+            const rec = op.analysis.recommendation;
+            const dev = Math.abs(op.analysis.deviation);
+            const signalStrength = Math.min(100, Math.round(dev * 8 + op.analysis.confidence * 0.3));
+            const riskLevel = dev >= 10 ? 'high' : dev >= 5 ? 'medium' : 'low';
+            const riskLabel = { high: '高收益', medium: '中收益', low: '稳健' }[riskLevel];
+            const riskColor = { high: 'bg-amber-500/20 text-amber-400', medium: 'bg-blue-500/20 text-blue-400', low: 'bg-edge-500/20 text-edge-400' }[riskLevel];
+            
+            return `
+              <div onclick="openEvent('${op.event.id}')" class="glass rounded-xl p-4 sm:p-5 relative overflow-hidden cursor-pointer glass-hover transition-all active:scale-[0.98]">
+                <div class="absolute top-0 right-0 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-edge-500/10 to-transparent rounded-bl-full"></div>
+                
+                <div class="flex items-center gap-2 mb-2 sm:mb-3">
+                  <span class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-edge-500/20 text-edge-400 flex items-center justify-center text-[10px] sm:text-xs font-bold">#${i + 1}</span>
+                  <span class="text-[10px] sm:text-xs text-edge-400 font-medium">套利机会</span>
+                  <span class="badge ${riskColor} ml-auto">${riskLabel}</span>
+                </div>
+                
+                <h3 class="font-semibold text-sm mb-3 sm:mb-4 line-clamp-2 pr-8">${op.event.title}</h3>
+                
+                <div class="grid grid-cols-3 gap-2 mb-3 sm:mb-4">
+                  <div class="bg-white/5 rounded-lg p-2 text-center">
+                    <div class="text-[9px] text-white/40 mb-0.5">市场概率</div>
+                    <div class="font-mono font-bold text-sm">${op.event.probability}%</div>
+                  </div>
+                  <div class="bg-edge-500/10 rounded-lg p-2 text-center">
+                    <div class="text-[9px] text-edge-400/60 mb-0.5">预测概率</div>
+                    <div class="font-mono font-bold text-sm text-edge-400">${op.analysis.predicted_probability}%</div>
+                  </div>
+                  <div class="bg-white/5 rounded-lg p-2 text-center">
+                    <div class="text-[9px] text-white/40 mb-0.5">信号强度</div>
+                    <div class="font-mono font-bold text-sm text-amber-400">${signalStrength}</div>
+                  </div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-[10px] text-white/40">预期收益</div>
+                    <div class="font-bold text-edge-400 text-sm">+${op.analysis.expected_profit.toFixed(1)}%</div>
+                  </div>
+                  <span class="px-2.5 py-1.5 bg-edge-500 text-black text-xs font-bold rounded-lg">
+                    ${rec.includes('yes') ? '买 YES' : '买 NO'}
+                  </span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function renderPaywall(title, desc, icon) {
+      const isLoggedIn = !!state.user;
+      return `
+        <div class="glass rounded-2xl p-8 sm:p-12 text-center max-w-xl mx-auto">
+          <div class="text-4xl sm:text-5xl mb-4 sm:mb-6">${icon}</div>
+          <h2 class="text-xl sm:text-2xl font-bold mb-2 sm:mb-3">${title}</h2>
+          <p class="text-white/50 text-sm mb-6 sm:mb-8 leading-relaxed">${desc}</p>
+          <button onclick="state.selectedTier='pro';state.showPaymentModal=true;render()" class="px-6 sm:px-8 py-2.5 sm:py-3 bg-edge-500 hover:bg-edge-400 text-black font-semibold rounded-xl transition-all text-sm sm:text-base">
+            升级专业版 →
+          </button>
+          ${!isLoggedIn ? `
+          <button onclick="state.authMode='register';state.showAuthModal=true;render()" class="block mx-auto mt-3 text-sm text-white/50 hover:text-white/70 transition-colors">
+            还没有账号？免费注册
+          </button>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function renderPricing() {
+      const plans = [
+        {
+          id: 'free',
+          name: t('pricing.free'),
+          price: '$0',
+          period: t('pricing.month'),
+          desc: t('pricing.free'),
+          features: ['每日查看3个事件', '市场概览浏览', '基础统计数据'],
+          cta: t('pricing.startFree'),
+          highlight: false
+        },
+        {
+          id: 'basic',
+          name: t('pricing.basic'),
+          price: '$19.9',
+          period: t('pricing.month'),
+          desc: '个人玩家入门',
+          features: ['每日查看30个事件', '实时价格警报', 'AI概率分析', '历史胜率数据'],
+          cta: t('pricing.upgradeNow'),
+          highlight: false
+        },
+        {
+          id: 'pro',
+          name: t('pricing.pro'),
+          price: '$59.9',
+          period: t('pricing.month'),
+          desc: '严肃交易者首选',
+          features: ['无限事件查看', '实时价格警报', 'AI深度分析（5因子）', '套利信号推送', '历史数据回溯'],
+          cta: t('pricing.startArb'),
+          highlight: true
+        },
+        {
+          id: 'agency',
+          name: t('pricing.agency'),
+          price: '$199.9',
+          period: t('pricing.month'),
+          desc: '团队 & 机构',
+          features: ['所有专业版功能', 'API 访问权限', '多账号管理', '定制化数据源', '专属客服支持'],
+          cta: t('pricing.contactUs'),
+          highlight: false
+        }
+      ];
+      
+      return `
+        <section id="pricing" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+          <div class="text-center mb-8 sm:mb-12">
+            <h2 class="text-2xl sm:text-3xl font-bold mb-2 sm:mb-3">${t('pricing.title')}</h2>
+            <p class="text-white/50 text-sm sm:text-base">${t('pricing.subtitle')}</p>
+          </div>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            ${plans.map(plan => `
+              <div class="rounded-2xl p-5 sm:p-6 ${plan.highlight ? 'gradient-border' : 'glass'} relative">
+                ${plan.highlight ? `
+                  <div class="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-edge-500 text-black text-[10px] font-bold rounded-full whitespace-nowrap">
+                    最受欢迎
+                  </div>
+                ` : ''}
+                <div class="mb-5 sm:mb-6">
+                  <div class="font-semibold mb-1">${plan.name}</div>
+                  <div class="text-white/50 text-xs sm:text-sm">${plan.desc}</div>
+                  <div class="mt-3 sm:mt-4 flex items-baseline gap-1">
+                    <span class="text-2xl sm:text-3xl font-bold">${plan.price}</span>
+                    <span class="text-white/40 text-xs sm:text-sm">${plan.period}</span>
+                  </div>
+                </div>
+                
+                <ul class="space-y-2 mb-5 sm:mb-6">
+                  ${plan.features.map(f => `
+                    <li class="flex items-start gap-2 text-xs sm:text-sm text-white/70">
+                      <span class="text-edge-500 mt-0.5 shrink-0">✓</span>
+                      <span>${f}</span>
+                    </li>
+                  `).join('')}
+                </ul>
+                
+                <button 
+                  onclick="handlePricingClick('${plan.id}')"
+                  class="w-full py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+                    plan.highlight 
+                      ? 'bg-edge-500 hover:bg-edge-400 text-black' 
+                      : plan.id === 'free'
+                        ? 'bg-white/5 hover:bg-white/10 text-white'
+                        : 'bg-white/10 hover:bg-white/15 text-white'
+                  }"
+                >
+                  ${plan.cta}
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderAuthModal() {
+      return `
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 modal-backdrop animate-fade-in" onclick="if(event.target===this)closeAuthModal()">
+          <div class="glass rounded-t-2xl sm:rounded-2xl p-6 sm:p-8 w-full max-w-md animate-slide-up max-h-[90vh] overflow-y-auto scrollbar-thin">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-white/40 hover:text-white rounded-lg hover:bg-white/5 transition-colors hidden sm:flex">
+              ✕
+            </button>
+            
+            <div class="text-center mb-6 sm:mb-8">
+              <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-edge-400 to-edge-600 flex items-center justify-center font-bold text-black text-lg sm:text-xl mx-auto mb-3 sm:mb-4">
+                PE
+              </div>
+              <h2 class="text-xl sm:text-2xl font-bold">${state.authMode === 'login' ? t('auth.welcomeBack') : t('auth.createAccount')}</h2>
+              <p class="text-white/50 text-xs sm:text-sm mt-1.5">${state.authMode === 'login' ? t('auth.loginSubtitle') : '免费开始，无需信用卡'}</p>
+            </div>
+            
+            <form onsubmit="${state.authMode === 'login' ? 'handleLogin(event)' : 'handleRegister(event)'}">
+              ${state.authMode === 'register' ? `
+                <div class="mb-3 sm:mb-4">
+                  <label class="block text-xs sm:text-sm text-white/70 mb-1.5 sm:mb-2">${t('auth.email')}</label>
+                  <input name="email" type="email" placeholder="${t('auth.emailPlaceholder')}" class="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none focus:border-edge-500/50 transition-colors">
+                </div>
+              ` : ''}
+              
+              <div class="mb-3 sm:mb-4">
+                <label class="block text-xs sm:text-sm text-white/70 mb-1.5 sm:mb-2">${t('auth.username')}</label>
+                <input name="username" type="text" required placeholder="${t('auth.usernamePlaceholder')}" class="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none focus:border-edge-500/50 transition-colors">
+              </div>
+              
+              <div class="mb-5 sm:mb-6">
+                <label class="block text-xs sm:text-sm text-white/70 mb-1.5 sm:mb-2">${t('auth.password')}</label>
+                <input name="password" type="password" required minlength="6" placeholder="${t('auth.passwordPlaceholder')}" class="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none focus:border-edge-500/50 transition-colors">
+              </div>
+              
+              <button type="submit" class="w-full py-2.5 sm:py-3 bg-edge-500 hover:bg-edge-400 text-black font-semibold rounded-xl transition-all text-sm sm:text-base">
+                ${state.authMode === 'login' ? t('auth.login') : t('auth.register')}
+              </button>
+            </form>
+            
+            <div class="mt-5 sm:mt-6 text-center text-xs sm:text-sm text-white/50">
+              ${state.authMode === 'login' ? t('auth.noAccount') : t('auth.haveAccount')}
+              <button onclick="switchAuthMode()" class="text-edge-400 hover:text-edge-300 font-medium ml-1">
+                ${state.authMode === 'login' ? t('auth.register') : t('auth.login')}
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function getUsdtWallet() {
+      if (state.systemConfig && state.systemConfig.usdt_wallet) {
+        return state.systemConfig.usdt_wallet;
+      }
+      return 'TV2MhRQDgBfFXXLxqZ58HhkGSMasCtfZPB';
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        toast('已复制到剪贴板', 'success');
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast('已复制到剪贴板', 'success');
+      });
+    }
+
+    function getStatusText(status) {
+      const map = {
+        'pending': '等待支付',
+        'pending_manual': '待人工审核',
+        'paid': '已支付',
+        'completed': '已完成',
+        'cancelled': '已取消',
+        'expired': '已过期'
+      };
+      return map[status] || status;
+    }
+
+    function getStatusColor(status) {
+      const map = {
+        'pending': 'text-amber-400',
+        'pending_manual': 'text-blue-400',
+        'paid': 'text-edge-400',
+        'completed': 'text-green-400',
+        'cancelled': 'text-red-400',
+        'expired': 'text-gray-400'
+      };
+      return map[status] || 'text-white/60';
+    }
+
+    async function createOrder() {
+      if (!state.user) return;
+      try {
+        const order = await api('/subscription/create-order', {
+          method: 'POST',
+          body: JSON.stringify({ tier: state.selectedTier, payment_method: 'usdt' })
+        });
+        state.currentOrder = order;
+        startOrderPolling(order.order_id);
+        toast('订单已创建', 'success');
+        render();
+      } catch (e) {
+        toast(e.message || '创建订单失败', 'error');
+      }
+    }
+
+    function startOrderPolling(orderId) {
+      if (state.orderPollingTimer) {
+        clearInterval(state.orderPollingTimer);
+      }
+      
+      state.orderPollingTimer = setInterval(async () => {
+        try {
+          const order = await api(`/orders/${orderId}`);
+          state.currentOrder = order;
+          
+          if (order.status === 'paid' || order.status === 'completed') {
+            clearInterval(state.orderPollingTimer);
+            state.orderPollingTimer = null;
+            toast('支付成功！订阅已激活', 'success');
+            if (state.user) {
+              state.user.subscription_tier = order.tier;
+              state.user.subscription_name = order.tier_name;
+              localStorage.setItem('predictedge_user', JSON.stringify(state.user));
+            }
+            setTimeout(() => {
+              closePaymentModal();
+            }, 2000);
+          }
+          render();
+        } catch (e) {
+          console.warn('轮询订单状态失败', e);
+        }
+      }, 10000);
+    }
+
+    function closePaymentModal() {
+      state.showPaymentModal = false;
+      if (state.orderPollingTimer) {
+        clearInterval(state.orderPollingTimer);
+        state.orderPollingTimer = null;
+      }
+      state.currentOrder = null;
+      document.body.style.overflow = '';
+      render();
+    }
+
+    async function submitTxHash() {
+      if (!state.currentOrder) return;
+      
+      const txHash = prompt('请输入您的交易哈希 (TxHash)：');
+      if (!txHash || txHash.trim().length < 10) {
+        toast('请输入有效的交易哈希', 'error');
+        return;
+      }
+      
+      try {
+        const result = await api(`/orders/${state.currentOrder.order_id}/submit_tx`, {
+          method: 'POST',
+          body: JSON.stringify({ tx_hash: txHash.trim() })
+        });
+        toast(result.message || '交易已提交，等待审核', 'success');
+        state.currentOrder.status = 'pending_manual';
+        render();
+      } catch (e) {
+        toast(e.message || '提交失败', 'error');
+      }
+    }
+
+    function renderPaymentModal() {
+      const tier = state.selectedTier || 'pro';
+      const tiers = {
+        basic: { name: '基础版', price: 19.9 },
+        pro: { name: '专业版', price: 59.9 },
+        agency: { name: '机构版', price: 199.9 }
+      };
+      const info = tiers[tier];
+      const wallet = getUsdtWallet();
+      const order = state.currentOrder;
+      
+      return `
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 modal-backdrop animate-fade-in" onclick="if(event.target===this)closePaymentModal()">
+          <div class="glass rounded-t-2xl sm:rounded-2xl p-6 sm:p-8 w-full max-w-md animate-slide-up max-h-[90vh] overflow-y-auto scrollbar-thin">
+            <button onclick="closePaymentModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-white/40 hover:text-white rounded-lg hover:bg-white/5 transition-colors">
+              ✕
+            </button>
+            
+            <div class="text-center mb-5 sm:mb-6">
+              <div class="text-3xl sm:text-4xl mb-2 sm:mb-3">💎</div>
+              <h2 class="text-lg sm:text-xl font-bold">升级到${info.name}</h2>
+              <div class="mt-2">
+                <span class="text-2xl sm:text-3xl font-bold gradient-text">$${info.price}</span>
+                <span class="text-white/40 text-sm">/月</span>
+              </div>
+            </div>
+            
+            <div class="bg-white/5 rounded-xl p-3.5 sm:p-4 mb-3 sm:mb-4">
+              <div class="text-xs sm:text-sm font-medium mb-2.5 sm:mb-3">支付方式</div>
+              <div class="flex items-center gap-3 p-2.5 sm:p-3 rounded-lg bg-edge-500/10 border border-edge-500/30">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center text-xs font-bold text-black">
+                  ₮
+                </div>
+                <div class="flex-1">
+                  <div class="text-xs sm:text-sm font-medium">USDT (TRC20)</div>
+                  <div class="text-[10px] sm:text-xs text-white/40">推荐 · 5-30分钟到账</div>
+                </div>
+                <div class="text-edge-400">✓</div>
+              </div>
+            </div>
+            
+            ${order ? `
+              <div class="bg-white/5 rounded-xl p-3.5 sm:p-4 mb-3 sm:mb-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] sm:text-xs text-white/50">订单号</span>
+                  <span class="font-mono text-[10px] sm:text-xs text-white/70">${order.order_id}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] sm:text-xs text-white/50">订单状态</span>
+                  <span class="text-[11px] sm:text-xs font-medium ${getStatusColor(order.status)}">${getStatusText(order.status)}</span>
+                </div>
+              </div>
+            ` : ''}
+            
+            <div class="bg-white/5 rounded-xl p-3.5 sm:p-4 mb-3 sm:mb-4">
+              <div class="text-[10px] sm:text-xs text-white/50 mb-1.5 sm:mb-2">收款地址 (TRC20)</div>
+              <div class="flex items-center gap-2">
+                <div class="font-mono text-[11px] sm:text-xs break-all bg-black/30 p-2.5 sm:p-3 rounded-lg border border-white/5 select-all flex-1">
+                  ${wallet}
+                </div>
+                <button onclick="copyToClipboard('${wallet}')" class="shrink-0 w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-sm" title="复制地址">
+                  📋
+                </button>
+              </div>
+            </div>
+            
+            <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 sm:p-4 mb-5 sm:mb-6">
+              <div class="flex items-start gap-2">
+                <span>⚠️</span>
+                <div class="text-[11px] sm:text-xs text-amber-200/80 leading-relaxed">
+                  请转账 <strong>$${info.price}</strong> USDT (TRC20网络)，转账后点击"我已转账"提交交易哈希，我们会尽快为您激活。
+                  <br><br>
+                  <strong>注意：</strong>请确保使用 TRC20 网络，否则可能导致转账丢失。
+                </div>
+              </div>
+            </div>
+            
+            ${state.user ? `
+              ${order ? `
+                <div class="flex gap-2 mb-2">
+                  <button onclick="submitTxHash()" class="flex-1 py-2.5 sm:py-3 bg-white/10 hover:bg-white/15 text-white font-medium rounded-xl transition-all text-sm sm:text-base">
+                    我已转账
+                  </button>
+                  <button onclick="createOrder()" class="flex-1 py-2.5 sm:py-3 bg-edge-500 hover:bg-edge-400 text-black font-semibold rounded-xl transition-all text-sm sm:text-base">
+                    新订单
+                  </button>
+                </div>
+              ` : `
+                <button onclick="createOrder()" class="w-full py-2.5 sm:py-3 bg-edge-500 hover:bg-edge-400 text-black font-semibold rounded-xl transition-all text-sm sm:text-base">
+                  生成订单号
+                </button>
+              `}
+            ` : `
+              <button onclick="goRegister()" class="w-full py-2.5 sm:py-3 bg-edge-500 hover:bg-edge-400 text-black font-semibold rounded-xl transition-all text-sm sm:text-base">
+                先登录再支付
+              </button>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderEventModal() {
+      const event = state.events.find(e => e.id === state.selectedEvent);
+      if (!event) return '';
+      
+      const analysis = analyzeEvent(event);
+      const rec = analysis.recommendation;
+      const unlocked = isEventUnlocked(event.id);
+      const isPro = state.user && (state.user.subscription_tier === 'pro' || state.user.subscription_tier === 'agency');
+      const remaining = getRemainingUnlocks();
+      
+      return `
+        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 modal-backdrop animate-fade-in" onclick="if(event.target===this)closeEventModal()">
+          <div class="glass rounded-t-2xl sm:rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin animate-slide-up">
+            <div class="sticky top-0 z-10 glass flex justify-between items-center p-3 sm:p-4 border-b border-white/5">
+              <div class="flex items-center gap-2">
+                ${unlocked ? '<span class="text-[10px] text-edge-400">✓ 已解锁</span>' : ''}
+                ${!unlocked && state.user && !isPro ? `<span class="text-[10px] text-white/40">今日剩余 ${remaining} 次解锁</span>` : ''}
+              </div>
+              <button onclick="closeEventModal()" class="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white rounded-lg hover:bg-white/5 transition-colors">
+                ✕
+              </button>
+            </div>
+            
+            <div class="p-5 sm:p-8">
+              <div class="flex items-center gap-2 mb-3 sm:mb-4">
+                <span class="badge ${getCategoryColor(event.category)} border">
+                  ${getCategoryIcon(event.category)} ${getCategoryLabel(event.category)}
+                </span>
+                <span class="text-[10px] text-white/40">${event.market}</span>
+              </div>
+              
+              <h2 class="text-lg sm:text-xl font-bold mb-5 sm:mb-6 leading-snug">${event.title}</h2>
+              
+              <!-- 概率大数字 -->
+              <div class="bg-white/5 rounded-2xl p-5 sm:p-6 mb-5 sm:mb-6">
+                <div class="text-center mb-4">
+                  <div class="text-4xl sm:text-5xl font-bold font-mono ${event.probability > 50 ? 'text-edge-400' : 'text-red-400'}">
+                    ${event.probability}%
+                  </div>
+                  <div class="text-xs sm:text-sm text-white/40 mt-2">Yes 概率</div>
+                </div>
+                
+                <div class="prob-bar-bg h-2.5 sm:h-3 rounded-full overflow-hidden mb-3">
+                  <div 
+                    class="h-full rounded-full transition-all duration-500 ${event.probability > 50 ? 'bg-gradient-to-r from-edge-600 to-edge-400' : 'bg-gradient-to-r from-red-600 to-red-400'}"
+                    style="width: ${event.probability}%"
+                  ></div>
+                </div>
+                
+                <div class="flex justify-between text-[10px] sm:text-xs text-white/40">
+                  <span>No 0%</span>
+                  <span>Yes 100%</span>
+                </div>
+              </div>
+              
+              <!-- 关键数据 -->
+              <div class="grid grid-cols-3 gap-2 sm:gap-3 mb-5 sm:mb-6">
+                <div class="bg-white/5 rounded-xl p-3 sm:p-4 text-center">
+                  <div class="font-bold text-sm sm:text-base">$${formatNumber(event.volume)}</div>
+                  <div class="text-[10px] sm:text-xs text-white/40 mt-1">交易量</div>
+                </div>
+                <div class="bg-white/5 rounded-xl p-3 sm:p-4 text-center">
+                  <div class="font-bold text-sm sm:text-base">${formatTimeLeft(event.deadline)}</div>
+                  <div class="text-[10px] sm:text-xs text-white/40 mt-1">剩余时间</div>
+                </div>
+                <div class="bg-white/5 rounded-xl p-3 sm:p-4 text-center">
+                  <div class="font-bold text-sm sm:text-base ${event.change > 0 ? 'text-edge-400' : 'text-red-400'}">
+                    ${event.change > 0 ? '+' : ''}${event.change}%
+                  </div>
+                  <div class="text-[10px] sm:text-xs text-white/40 mt-1">24h涨跌</div>
+                </div>
+              </div>
+              
+              <!-- AI分析 -->
+              <div class="bg-edge-500/5 border border-edge-500/20 rounded-2xl p-4 sm:p-6 relative overflow-hidden">
+                <div class="flex items-center gap-2 mb-3 sm:mb-4">
+                  <span class="text-lg sm:text-xl">🤖</span>
+                  <span class="font-semibold text-sm sm:text-base">AI 概率分析</span>
+                </div>
+                
+                ${unlocked ? `
+                <!-- 解锁状态：完整显示 -->
+                <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+                  <div>
+                    <div class="text-[10px] sm:text-xs text-white/40 mb-1">预测概率</div>
+                    <div class="text-xl sm:text-2xl font-bold text-edge-400">${analysis.predicted_probability}%</div>
+                  </div>
+                  <div>
+                    <div class="text-[10px] sm:text-xs text-white/40 mb-1">偏差值</div>
+                    <div class="text-xl sm:text-2xl font-bold ${analysis.deviation > 0 ? 'text-edge-400' : 'text-red-400'}">
+                      ${analysis.deviation > 0 ? '+' : ''}${analysis.deviation}%
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="bg-white/5 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
+                  <div class="text-xs sm:text-sm text-white/70 leading-relaxed">${analysis.reasoning}</div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div class="text-xs sm:text-sm">
+                    <span class="text-white/40">置信度：</span>
+                    <span class="font-semibold text-amber-400">${analysis.confidence}%</span>
+                    <span class="mx-2 text-white/20">|</span>
+                    <span class="text-white/40">预期收益：</span>
+                    <span class="font-semibold text-edge-400">+${analysis.expected_profit.toFixed(1)}%</span>
+                  </div>
+                  <span class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold w-full sm:w-auto text-center ${
+                    rec === 'buy_yes' 
+                      ? 'bg-edge-500 text-black' 
+                      : rec === 'buy_no'
+                        ? 'bg-red-500 text-white'
+                        : 'bg-white/10 text-white/60'
+                  }">
+                    ${rec === 'buy_yes' ? '建议买 YES' : rec === 'buy_no' ? '建议买 NO' : '建议观望'}
+                  </span>
+                </div>
+                ` : `
+                <!-- 锁定状态：模糊显示 + 解锁按钮 -->
+                <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+                  <div>
+                    <div class="text-[10px] sm:text-xs text-white/40 mb-1">预测概率</div>
+                    <div class="text-xl sm:text-2xl font-bold text-edge-400 blur-md select-none">??%</div>
+                  </div>
+                  <div>
+                    <div class="text-[10px] sm:text-xs text-white/40 mb-1">偏差值</div>
+                    <div class="text-xl sm:text-2xl font-bold text-edge-400 blur-md select-none">??%</div>
+                  </div>
+                </div>
+                
+                <div class="bg-white/5 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
+                  <div class="text-xs sm:text-sm text-white/70 leading-relaxed blur-md select-none h-10 overflow-hidden">
+                    AI深度分析内容被锁定，解锁后可查看完整分析逻辑和操作建议...
+                  </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                  <div class="text-xs sm:text-sm blur-md select-none">
+                    <span class="text-white/40">置信度：</span>
+                    <span class="font-semibold">??%</span>
+                  </div>
+                  <span class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold w-full sm:w-auto text-center bg-white/10 text-white/30 blur-sm select-none">
+                    建议 ???
+                  </span>
+                </div>
+                
+                <!-- 解锁按钮区域 -->
+                <div class="border-t border-white/5 pt-4 mt-2">
+                  ${state.user ? `
+                    ${remaining > 0 ? `
+                      <button onclick="unlockEvent('${event.id}')" class="w-full py-3 bg-edge-500 hover:bg-edge-400 text-black font-semibold rounded-xl transition-all text-sm">
+                        🔓 解锁此分析（今日剩余 ${remaining} 次）
+                      </button>
+                      <p class="text-[10px] text-white/30 text-center mt-2">
+                        免费用户每日可解锁 ${state.dailyUnlockLimit} 次 · <span class="text-edge-400 cursor-pointer hover:underline" onclick="closeEventModal();document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">升级专业版无限查看</span>
+                      </p>
+                    ` : `
+                      <button onclick="closeEventModal();document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl transition-all text-sm">
+                        ⚡ 今日次数已用完，升级专业版
+                      </button>
+                      <p class="text-[10px] text-white/30 text-center mt-2">
+                        专业版无限次解锁 · 更多高级分析功能
+                      </p>
+                    `}
+                  ` : `
+                    <button onclick="state.authMode='register';state.showAuthModal=true;closeEventModal()" class="w-full py-3 bg-edge-500 hover:bg-edge-400 text-black font-semibold rounded-xl transition-all text-sm">
+                      🎁 免费注册，解锁 ${state.dailyUnlockLimit} 次AI分析
+                    </button>
+                    <p class="text-[10px] text-white/30 text-center mt-2">
+                      注册即可免费使用，无需信用卡
+                    </p>
+                  `}
+                </div>
+                `}
+              </div>
+              
+              <button 
+                onclick="window.open('https://polymarket.com', '_blank')"
+                class="w-full mt-5 sm:mt-6 py-2.5 sm:py-3 bg-white/5 hover:bg-white/10 text-white font-medium rounded-xl transition-all flex items-center justify-center gap-2 text-sm"
+              >
+                <span>前往 Polymarket 交易</span>
+                <span>↗</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFooter() {
+      return `
+        <footer class="border-t border-white/5 py-8 sm:py-12">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-5 sm:gap-6">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-edge-400 to-edge-600 flex items-center justify-center font-bold text-black text-xs sm:text-sm">
+                  PE
+                </div>
+                <div>
+                  <div class="font-semibold text-xs sm:text-sm">PredictEdge</div>
+                  <div class="text-[9px] sm:text-[10px] text-white/40">预测市场智能套利</div>
+                </div>
+              </div>
+              
+              <div class="flex items-center gap-5 sm:gap-6 text-xs sm:text-sm text-white/40">
+                <a href="#" class="hover:text-white/60 transition-colors">${t('footer.about')}</a>
+                <a href="#" class="hover:text-white/60 transition-colors">${t('footer.terms')}</a>
+                <a href="#" class="hover:text-white/60 transition-colors">${t('footer.privacy')}</a>
+                <a href="#" class="hover:text-white/60 transition-colors">${t('footer.contact')}</a>
+              </div>
+            </div>
+            
+            <div class="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-white/5 text-center text-[10px] sm:text-xs text-white/30">
+              © 2024 PredictEdge. 投资有风险，入市需谨慎。本工具仅供参考，不构成投资建议。
+            </div>
+          </div>
+        </footer>
+      `;
+    }
+
+    function renderBottomNav() {
+      const items = [
+        { id: 'markets', label: t('tab.markets'), icon: '📊' },
+        { id: 'alerts', label: t('tab.alerts'), icon: '🔔' },
+        { id: 'analysis', label: t('tab.analysis'), icon: '📈' },
+        { id: 'arbitrage', label: t('tab.arbitrage'), icon: '💎' },
+        { id: 'profile', label: t('tab.profile'), icon: '👤' },
+      ];
+      
+      return `
+        <nav class="bottom-nav md:hidden">
+          <div class="flex items-center justify-around">
+            ${items.map(item => `
+              <button 
+                onclick="handleBottomNav('${item.id}')"
+                class="bottom-nav-item flex-1 ${state.currentTab === item.id ? 'active' : 'text-white/40'}"
+              >
+                <span class="bottom-nav-icon">${item.icon}</span>
+                <span>${item.label}</span>
+              </button>
+            `).join('')}
+          </div>
+        </nav>
+      `;
+    }
+
+    // ==================== 事件处理 ====================
+    function switchTab(tabId) {
+      state.currentTab = tabId;
+      state.searchQuery = '';
+      
+      if (tabId === 'alerts' && state.user && state.alerts.length === 0) {
+        loadAlerts();
+      }
+      
+      render();
+      setTimeout(() => {
+        const mainSection = document.getElementById('markets-section');
+        if (mainSection) {
+          mainSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+
+    function switchCategory(catId) {
+      state.currentCategory = catId;
+      loadData();
+    }
+
+    function handleSearch(e) {
+      state.searchQuery = e.target.value;
+      if (state.searchQuery.length > 0 || state.searchQuery.length === 0) {
+        loadData();
+      }
+    }
+
+    function isEventUnlocked(eventId) {
+      if (!state.user) return false;
+      if (state.user.subscription_tier === 'pro' || state.user.subscription_tier === 'agency') return true;
+      return state.unlockedEvents.includes(eventId);
+    }
+
+    function getRemainingUnlocks() {
+      if (!state.user) return state.dailyUnlockLimit;
+      if (state.user.subscription_tier === 'pro' || state.user.subscription_tier === 'agency') return 999;
+      const limit = state.user.daily_events_limit || state.dailyUnlockLimit;
+      const viewed = state.user.daily_events_viewed || 0;
+      return Math.max(0, limit - viewed);
+    }
+
+    async function unlockEvent(eventId) {
+      if (isEventUnlocked(eventId)) return true;
+      if (!state.user) {
+        state.showAuthModal = true;
+        state.authMode = 'register';
+        render();
+        return false;
+      }
+      if (state.user.subscription_tier === 'pro' || state.user.subscription_tier === 'agency') return true;
+      
+      const remaining = getRemainingUnlocks();
+      if (remaining <= 0) {
+        toast('今日免费解锁次数已用完，升级专业版解锁全部', 'warning');
+        state.selectedEvent = null;
+        document.body.style.overflow = '';
+        render();
+        setTimeout(() => {
+          document.getElementById('pricing')?.scrollIntoView({behavior: 'smooth'});
+        }, 100);
+        return false;
+      }
+      
+      try {
+        const eventDetail = await api(`/events/${eventId}`);
+        state.unlockedEvents.push(eventId);
+        if (state.user) {
+          state.user.daily_events_viewed = (state.user.daily_events_viewed || 0) + 1;
+        }
+        toast(`解锁成功！今日剩余 ${getRemainingUnlocks()} 次`, 'success');
+        render();
+        return true;
+      } catch (e) {
+        if (e.message && e.message.includes('今日查看次数已用完')) {
+          toast('今日免费解锁次数已用完，升级专业版解锁全部', 'warning');
+          if (state.user) {
+            state.user.daily_events_viewed = state.user.daily_events_limit || state.dailyUnlockLimit;
+          }
+          state.selectedEvent = null;
+          document.body.style.overflow = '';
+          render();
+          setTimeout(() => {
+            document.getElementById('pricing')?.scrollIntoView({behavior: 'smooth'});
+          }, 100);
+        } else {
+          toast(e.message || '解锁失败', 'error');
+        }
+        return false;
+      }
+    }
+
+    function openEvent(id) {
+      state.selectedEvent = id;
+      document.body.style.overflow = 'hidden';
+      render();
+    }
+
+    function closeEventModal() {
+      state.selectedEvent = null;
+      document.body.style.overflow = '';
+      render();
+    }
+
+    function closeAuthModal() {
+      state.showAuthModal = false;
+      document.body.style.overflow = '';
+      render();
+    }
+
+    function closePaymentModal() {
+      state.showPaymentModal = false;
+      document.body.style.overflow = '';
+      render();
+    }
+
+    function switchAuthMode() {
+      state.authMode = state.authMode === 'login' ? 'register' : 'login';
+      render();
+    }
+
+    function handlePricingClick(tier) {
+      if (tier === 'free') {
+        state.authMode = 'register';
+        state.showAuthModal = true;
+      } else {
+        state.selectedTier = tier;
+        state.showPaymentModal = true;
+      }
+      document.body.style.overflow = 'hidden';
+      render();
+    }
+
+    function goRegister() {
+      state.showPaymentModal = false;
+      state.authMode = 'register';
+      state.showAuthModal = true;
+      render();
+    }
+
+    function handleBottomNav(item) {
+      if (item === 'profile') {
+        if (state.user) {
+          toast(`${state.user.username} · ${state.user.subscription_name}`);
+        } else {
+          state.authMode = 'login';
+          state.showAuthModal = true;
+          document.body.style.overflow = 'hidden';
+          render();
+        }
+        return;
+      }
+      switchTab(item);
+    }
+
+    async function createOrder() {
+      if (!state.user) return;
+      try {
+        const order = await api('/subscription/create-order', {
+          method: 'POST',
+          body: JSON.stringify({ tier: state.selectedTier, payment_method: 'usdt' })
+        });
+        toast(`订单已创建：${order.order_id}`, 'success');
+      } catch (e) {
+        toast(e.message || '创建订单失败', 'error');
+      }
+    }
+
+    // ==================== 初始化 ====================
+    async function init() {
+      try {
+        state.systemConfig = await api('/config');
+      } catch (e) {
+        console.warn('加载系统配置失败', e);
+      }
+      await checkAuth();
+      await loadData();
+      if (state.token && state.alerts.length === 0) {
+        loadAlerts();
+      }
+      
+      // 定时刷新
+      setInterval(() => {
+        if (state.currentTab === 'markets' || state.currentTab === 'analysis') {
+          loadData();
+        }
+      }, 120000);
+    }
+
+    init();
+  </script>
+</body>
+</html>
