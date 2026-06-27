@@ -258,6 +258,48 @@ try:
 except Exception as e:
     logger.error(f"数据库初始化异常: {e}")
 
+# 创建默认管理员（通过环境变量配置）
+def create_default_admin():
+    admin_username = os.environ.get("ADMIN_USERNAME", "")
+    admin_password = os.environ.get("ADMIN_PASSWORD", "")
+    
+    if not admin_username or not admin_password:
+        logger.info("未配置 ADMIN_USERNAME 和 ADMIN_PASSWORD，跳过创建默认管理员")
+        return
+    
+    conn = get_db()
+    try:
+        # 检查是否已存在
+        existing = conn.execute(
+            "SELECT id FROM users WHERE username = ?",
+            (admin_username,)
+        ).fetchone()
+        
+        if existing:
+            # 更新为管理员
+            conn.execute(
+                "UPDATE users SET role = 'admin' WHERE username = ?",
+                (admin_username,)
+            )
+            conn.commit()
+            logger.info(f"已将用户 {admin_username} 设置为管理员")
+        else:
+            # 创建新管理员
+            password_hash = get_password_hash(admin_password)
+            conn.execute(
+                "INSERT INTO users (username, password_hash, role, subscription_tier, subscription_end_date) VALUES (?, ?, 'admin', 'agency', '2099-12-31')",
+                (admin_username, password_hash)
+            )
+            conn.commit()
+            logger.info(f"已创建管理员账户: {admin_username}")
+    finally:
+        conn.close()
+
+try:
+    create_default_admin()
+except Exception as e:
+    logger.error(f"创建管理员失败: {e}")
+
 # ==================== 密码哈希 ====================
 
 # 直接使用 bcrypt 库，避免 passlib 与 bcrypt 5.x 版本兼容性问题
