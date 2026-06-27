@@ -1,0 +1,12 @@
+{
+  "build": {
+    "command": "echo 'Build complete'",
+    "publish": "frontend"
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://predict-edge-backend.onrender.com/api/$1"
+    }
+  ]
+}

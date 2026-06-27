@@ -2026,6 +2026,18 @@ FRONTEND_DIR = os.environ.get(
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
 )
 
+# 如果 FRONTEND_DIR 不存在，尝试其他常见路径
+if not os.path.exists(FRONTEND_DIR):
+    alt_paths = [
+        "/opt/render/project/src/frontend",
+        os.path.join(os.getcwd(), "frontend"),
+        os.path.join(os.getcwd(), "..", "frontend"),
+    ]
+    for alt in alt_paths:
+        if os.path.exists(alt):
+            FRONTEND_DIR = alt
+            break
+
 ADMIN_DIR = os.environ.get(
     "ADMIN_DIR",
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "admin")
