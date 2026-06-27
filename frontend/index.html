@@ -313,6 +313,13 @@
         'ai.remaining': '今日剩余 {n} 次解锁',
         'ai.unlockBtn': '解锁查看完整分析',
         'ai.upgradeBtn': '升级专业版 无限解锁',
+        'ai.locked': 'AI深度分析内容被锁定，解锁后可查看完整分析逻辑和操作建议...',
+        'ai.freeLimit': '免费用户每日可解锁 3 次',
+        'ai.noMoreUnlocks': '⚡ 今日次数已用完，升级专业版',
+        'ai.proUnlimited': '专业版无限次解锁 · 更多高级分析功能',
+        'ai.registerUnlock': '🎁 免费注册，解锁 3 次AI分析',
+        'ai.registerFree': '注册即可免费使用，无需信用卡',
+        'ai.goTrade': '前往 Polymarket 交易',
         
         // 定价
         'pricing.title': '选择适合你的方案',
@@ -567,6 +574,13 @@
         'ai.remaining': '{n} unlocks remaining today',
         'ai.unlockBtn': 'Unlock full analysis',
         'ai.upgradeBtn': 'Upgrade to Pro · Unlimited',
+        'ai.locked': 'AI deep analysis content is locked. Unlock to view complete analysis logic and trading suggestions...',
+        'ai.freeLimit': 'Free users unlock 3 times daily',
+        'ai.noMoreUnlocks': '⚡ Daily limit reached, upgrade to Pro',
+        'ai.proUnlimited': 'Pro unlimited unlocks · More advanced analysis features',
+        'ai.registerUnlock': '🎁 Sign up free, unlock 3 AI analyses',
+        'ai.registerFree': 'Free to use after registration, no credit card required',
+        'ai.goTrade': 'Trade on Polymarket',
         
         // Pricing
         'pricing.title': 'Choose Your Plan',
@@ -2640,8 +2654,8 @@
           <div class="glass rounded-t-2xl sm:rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin animate-slide-up">
             <div class="sticky top-0 z-10 glass flex justify-between items-center p-3 sm:p-4 border-b border-white/5">
               <div class="flex items-center gap-2">
-                ${unlocked ? '<span class="text-[10px] text-edge-400">✓ 已解锁</span>' : ''}
-                ${!unlocked && state.user && !isPro ? `<span class="text-[10px] text-white/40">今日剩余 ${remaining} 次解锁</span>` : ''}
+                ${unlocked ? `<span class="text-[10px] text-edge-400">${t('ai.unlocked')}</span>` : ''}
+                ${!unlocked && state.user && !isPro ? `<span class="text-[10px] text-white/40">${t('ai.remaining', { n: remaining })}</span>` : ''}
               </div>
               <button onclick="closeEventModal()" class="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white rounded-lg hover:bg-white/5 transition-colors">
                 ✕
@@ -2664,7 +2678,7 @@
                   <div class="text-4xl sm:text-5xl font-bold font-mono ${event.probability > 50 ? 'text-edge-400' : 'text-red-400'}">
                     ${event.probability}%
                   </div>
-                  <div class="text-xs sm:text-sm text-white/40 mt-2">Yes 概率</div>
+                  <div class="text-xs sm:text-sm text-white/40 mt-2">${t('common.yesProb')}</div>
                 </div>
                 
                 <div class="prob-bar-bg h-2.5 sm:h-3 rounded-full overflow-hidden mb-3">
@@ -2684,17 +2698,17 @@
               <div class="grid grid-cols-3 gap-2 sm:gap-3 mb-5 sm:mb-6">
                 <div class="bg-white/5 rounded-xl p-3 sm:p-4 text-center">
                   <div class="font-bold text-sm sm:text-base">$${formatNumber(event.volume)}</div>
-                  <div class="text-[10px] sm:text-xs text-white/40 mt-1">交易量</div>
+                  <div class="text-[10px] sm:text-xs text-white/40 mt-1">${t('common.volume')}</div>
                 </div>
                 <div class="bg-white/5 rounded-xl p-3 sm:p-4 text-center">
                   <div class="font-bold text-sm sm:text-base">${formatTimeLeft(event.deadline)}</div>
-                  <div class="text-[10px] sm:text-xs text-white/40 mt-1">剩余时间</div>
+                  <div class="text-[10px] sm:text-xs text-white/40 mt-1">${t('common.timeLeft')}</div>
                 </div>
                 <div class="bg-white/5 rounded-xl p-3 sm:p-4 text-center">
                   <div class="font-bold text-sm sm:text-base ${event.change > 0 ? 'text-edge-400' : 'text-red-400'}">
                     ${event.change > 0 ? '+' : ''}${event.change}%
                   </div>
-                  <div class="text-[10px] sm:text-xs text-white/40 mt-1">24h涨跌</div>
+                  <div class="text-[10px] sm:text-xs text-white/40 mt-1">${t('common.change24h')}</div>
                 </div>
               </div>
               
@@ -2702,18 +2716,18 @@
               <div class="bg-edge-500/5 border border-edge-500/20 rounded-2xl p-4 sm:p-6 relative overflow-hidden">
                 <div class="flex items-center gap-2 mb-3 sm:mb-4">
                   <span class="text-lg sm:text-xl">🤖</span>
-                  <span class="font-semibold text-sm sm:text-base">AI 概率分析</span>
+                  <span class="font-semibold text-sm sm:text-base">${t('ai.title')}</span>
                 </div>
                 
                 ${unlocked ? `
                 <!-- 解锁状态：完整显示 -->
                 <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                   <div>
-                    <div class="text-[10px] sm:text-xs text-white/40 mb-1">预测概率</div>
+                    <div class="text-[10px] sm:text-xs text-white/40 mb-1">${t('ai.predicted')}</div>
                     <div class="text-xl sm:text-2xl font-bold text-edge-400">${analysis.predicted_probability}%</div>
                   </div>
                   <div>
-                    <div class="text-[10px] sm:text-xs text-white/40 mb-1">偏差值</div>
+                    <div class="text-[10px] sm:text-xs text-white/40 mb-1">${t('ai.deviation')}</div>
                     <div class="text-xl sm:text-2xl font-bold ${analysis.deviation > 0 ? 'text-edge-400' : 'text-red-400'}">
                       ${analysis.deviation > 0 ? '+' : ''}${analysis.deviation}%
                     </div>
@@ -2726,10 +2740,10 @@
                 
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div class="text-xs sm:text-sm">
-                    <span class="text-white/40">置信度：</span>
+                    <span class="text-white/40">${t('ai.confidence')}：</span>
                     <span class="font-semibold text-amber-400">${analysis.confidence}%</span>
                     <span class="mx-2 text-white/20">|</span>
-                    <span class="text-white/40">预期收益：</span>
+                    <span class="text-white/40">${t('ai.expectedProfit')}：</span>
                     <span class="font-semibold text-edge-400">+${analysis.expected_profit.toFixed(1)}%</span>
                   </div>
                   <span class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold w-full sm:w-auto text-center ${
@@ -2739,35 +2753,35 @@
                         ? 'bg-red-500 text-white'
                         : 'bg-white/10 text-white/60'
                   }">
-                    ${rec === 'buy_yes' ? '建议买 YES' : rec === 'buy_no' ? '建议买 NO' : '建议观望'}
+                    ${rec === 'buy_yes' ? t('ai.buyYes') : rec === 'buy_no' ? t('ai.buyNo') : t('ai.hold')}
                   </span>
                 </div>
                 ` : `
                 <!-- 锁定状态：模糊显示 + 解锁按钮 -->
                 <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                   <div>
-                    <div class="text-[10px] sm:text-xs text-white/40 mb-1">预测概率</div>
+                    <div class="text-[10px] sm:text-xs text-white/40 mb-1">${t('ai.predicted')}</div>
                     <div class="text-xl sm:text-2xl font-bold text-edge-400 blur-md select-none">??%</div>
                   </div>
                   <div>
-                    <div class="text-[10px] sm:text-xs text-white/40 mb-1">偏差值</div>
+                    <div class="text-[10px] sm:text-xs text-white/40 mb-1">${t('ai.deviation')}</div>
                     <div class="text-xl sm:text-2xl font-bold text-edge-400 blur-md select-none">??%</div>
                   </div>
                 </div>
                 
                 <div class="bg-white/5 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
                   <div class="text-xs sm:text-sm text-white/70 leading-relaxed blur-md select-none h-10 overflow-hidden">
-                    AI深度分析内容被锁定，解锁后可查看完整分析逻辑和操作建议...
+                    ${t('ai.locked')}
                   </div>
                 </div>
                 
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                   <div class="text-xs sm:text-sm blur-md select-none">
-                    <span class="text-white/40">置信度：</span>
+                    <span class="text-white/40">${t('ai.confidence')}：</span>
                     <span class="font-semibold">??%</span>
                   </div>
                   <span class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold w-full sm:w-auto text-center bg-white/10 text-white/30 blur-sm select-none">
-                    建议 ???
+                    ${t('ai.recommendation')} ???
                   </span>
                 </div>
                 
@@ -2776,25 +2790,25 @@
                   ${state.user ? `
                     ${remaining > 0 ? `
                       <button onclick="unlockEvent('${event.id}')" class="w-full py-3 bg-edge-500 hover:bg-edge-400 text-black font-semibold rounded-xl transition-all text-sm">
-                        🔓 解锁此分析（今日剩余 ${remaining} 次）
+                        ${t('ai.unlockBtn')}
                       </button>
                       <p class="text-[10px] text-white/30 text-center mt-2">
-                        免费用户每日可解锁 ${state.dailyUnlockLimit} 次 · <span class="text-edge-400 cursor-pointer hover:underline" onclick="closeEventModal();document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">升级专业版无限查看</span>
+                        ${t('ai.freeLimit')} · <span class="text-edge-400 cursor-pointer hover:underline" onclick="closeEventModal();document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">${t('ai.upgradeBtn')}</span>
                       </p>
                     ` : `
                       <button onclick="closeEventModal();document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl transition-all text-sm">
-                        ⚡ 今日次数已用完，升级专业版
+                        ${t('ai.noMoreUnlocks')}
                       </button>
                       <p class="text-[10px] text-white/30 text-center mt-2">
-                        专业版无限次解锁 · 更多高级分析功能
+                        ${t('ai.proUnlimited')}
                       </p>
                     `}
                   ` : `
                     <button onclick="state.authMode='register';state.showAuthModal=true;closeEventModal()" class="w-full py-3 bg-edge-500 hover:bg-edge-400 text-black font-semibold rounded-xl transition-all text-sm">
-                      🎁 免费注册，解锁 ${state.dailyUnlockLimit} 次AI分析
+                      ${t('ai.registerUnlock')}
                     </button>
                     <p class="text-[10px] text-white/30 text-center mt-2">
-                      注册即可免费使用，无需信用卡
+                      ${t('ai.registerFree')}
                     </p>
                   `}
                 </div>
@@ -2805,7 +2819,7 @@
                 onclick="window.open('https://polymarket.com', '_blank')"
                 class="w-full mt-5 sm:mt-6 py-2.5 sm:py-3 bg-white/5 hover:bg-white/10 text-white font-medium rounded-xl transition-all flex items-center justify-center gap-2 text-sm"
               >
-                <span>前往 Polymarket 交易</span>
+                <span>${t('ai.goTrade')}</span>
                 <span>↗</span>
               </button>
             </div>
@@ -2825,7 +2839,7 @@
                 </div>
                 <div>
                   <div class="font-semibold text-xs sm:text-sm">PredictEdge</div>
-                  <div class="text-[9px] sm:text-[10px] text-white/40">预测市场智能套利</div>
+                  <div class="text-[9px] sm:text-[10px] text-white/40">AI Prediction Markets</div>
                 </div>
               </div>
               
