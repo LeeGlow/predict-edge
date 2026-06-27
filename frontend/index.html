@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#0a0a0b" />
-  <title>PredictEdge — 预测市场智能套利平台</title>
-  <meta name="description" content="AI驱动的预测市场套利工具，实时概率偏差检测，历史胜率分析，智能套利信号" />
+  <title>PredictEdge — AI Prediction Market Arbitrage Platform</title>
+  <meta name="description" content="AI-powered prediction market arbitrage platform. Real-time cross-platform probability deviation detection, historical win rate analysis, and executable arbitrage signals." />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -229,6 +229,10 @@
     // ==================== 国际化 i18n ====================
     const i18n = {
       zh: {
+        // Page
+        'page.title': 'PredictEdge — 预测市场智能套利平台',
+        'page.description': 'AI驱动的预测市场套利工具，实时概率偏差检测，历史胜率分析，智能套利信号',
+        
         // 导航
         'nav.markets': '市场行情',
         'nav.arbitrage': '套利信号',
@@ -399,8 +403,51 @@
         'common.yesProb': 'Yes 概率',
         'common.market': '市场',
         'common.category': '分类',
+        
+        // Toast messages
+        'toast.fillLoginFields': '请填写用户名和密码',
+        'toast.loginSuccess': '登录成功',
+        'toast.loginFailed': '登录失败',
+        'toast.registerSuccess': '注册成功',
+        'toast.registerFailed': '注册失败',
+        'toast.loggedOut': '已退出登录',
+        'toast.copied': '已复制到剪贴板',
+        'toast.orderCreated': '订单已创建',
+        'toast.orderFailed': '创建订单失败',
+        'toast.paymentSuccess': '支付成功！订阅已激活',
+        'toast.invalidTxHash': '请输入有效的交易哈希',
+        'toast.txSubmitted': '交易已提交，等待审核',
+        'toast.submitFailed': '提交失败',
+        'toast.freeUnlocksUsed': '今日免费解锁次数已用完，升级专业版解锁全部',
+        'toast.unlockSuccess': '解锁成功！今日剩余 {n} 次',
+        'toast.unlockFailed': '解锁失败',
+        'toast.orderCreated2': '订单已创建：{orderId}',
+        'toast.needLogin': '请先登录',
+        'toast.requestFailed': '请求失败',
+        'toast.qaAnswer1': '不是。Dutch Book 类策略理论上为无风险套利，但实际交易中仍可能受流动性、滑点、平台规则变动等因素影响，存在本金损失风险。PredictEdge 仅提供工具辅助与信号参考，不构成任何投资建议。',
+        
+        // FAQ
+        'faq.q1': '套利是稳赚不赔的吗？',
+        'faq.a1': '不是。Dutch Book 类策略理论上为无风险套利，但实际交易中仍可能受流动性、滑点、平台规则变动等因素影响，存在本金损失风险。PredictEdge 仅提供工具辅助与信号参考，不构成任何投资建议。',
+        'faq.q2': '使用需要绑定我的交易账户资产吗？',
+        'faq.a2': '不需要。基础版仅提供信号与数据，PRO 版的自动交易需用户自行授权 API 密钥，资产始终保留在您的平台账户中，我们无法划转您的资金。',
+        'faq.q3': '订阅可以退款吗？',
+        'faq.a3': '购买后 7 天内如对服务不满意，可联系客服申请退款。超过 7 天的订阅费用不予退还，但可暂停服务。',
+        'faq.q4': '数据延迟是多少？',
+        'faq.a4': 'PRO 版用户享受低于 100ms 的实时数据流，免费版和基础版的数据刷新频率分别为 5 分钟和 1 分钟。',
+        'faq.q5': '支持哪些预测市场平台？',
+        'faq.a5': '目前已接入 Polymarket、Manifold、Kalshi，后续将持续接入更多全球主流预测市场平台。',
+        'faq.q6': '新手不会操作怎么办？',
+        'faq.a6': '每个套利信号均附带详细的分步操作指南，同时我们提供社区答疑与新手入门教程，零基础也可快速上手。',
+        
+        // Footer
+        'footer.copyright': '© 2024 PredictEdge. 投资有风险，入市需谨慎。本工具仅供参考，不构成投资建议。',
       },
       en: {
+        // Page
+        'page.title': 'PredictEdge — AI Prediction Market Arbitrage Platform',
+        'page.description': 'AI-powered prediction market arbitrage platform. Real-time cross-platform probability deviation detection, historical win rate analysis, and executable arbitrage signals.',
+        
         // Navigation
         'nav.markets': 'Markets',
         'nav.arbitrage': 'Arbitrage',
@@ -571,6 +618,45 @@
         'common.yesProb': 'Yes Probability',
         'common.market': 'Market',
         'common.category': 'Category',
+        
+        // Toast messages
+        'toast.fillLoginFields': 'Please fill in username and password',
+        'toast.loginSuccess': 'Login successful',
+        'toast.loginFailed': 'Login failed',
+        'toast.registerSuccess': 'Registration successful',
+        'toast.registerFailed': 'Registration failed',
+        'toast.loggedOut': 'Logged out',
+        'toast.copied': 'Copied to clipboard',
+        'toast.orderCreated': 'Order created',
+        'toast.orderFailed': 'Failed to create order',
+        'toast.paymentSuccess': 'Payment successful! Subscription activated',
+        'toast.invalidTxHash': 'Please enter a valid transaction hash',
+        'toast.txSubmitted': 'Transaction submitted, awaiting review',
+        'toast.submitFailed': 'Submission failed',
+        'toast.freeUnlocksUsed': 'Daily free unlocks exhausted. Upgrade to Pro for unlimited',
+        'toast.unlockSuccess': 'Unlocked! {n} free unlocks remaining today',
+        'toast.unlockFailed': 'Unlock failed',
+        'toast.orderCreated2': 'Order created: {orderId}',
+        'toast.needLogin': 'Please login first',
+        'toast.requestFailed': 'Request failed',
+        'toast.qaAnswer1': 'No. Dutch Book strategies are theoretically risk-free arbitrage, but actual trading may still be affected by liquidity, slippage, and platform rule changes. Principal loss is possible. PredictEdge only provides tools and signal references, not investment advice.',
+        
+        // FAQ
+        'faq.q1': 'Is arbitrage risk-free?',
+        'faq.a1': 'No. Dutch Book strategies are theoretically risk-free arbitrage, but actual trading may still be affected by liquidity, slippage, and platform rule changes. Principal loss is possible. PredictEdge only provides tools and signal references, not investment advice.',
+        'faq.q2': 'Do I need to bind my trading account assets?',
+        'faq.a2': 'No. Basic plan only provides signals and data. PRO plan auto-trading requires users to authorize API keys themselves. Assets always remain in your platform account. We cannot transfer your funds.',
+        'faq.q3': 'Can I get a refund?',
+        'faq.a3': 'Within 7 days of purchase, you can contact support for a refund if unsatisfied. Subscriptions over 7 days are non-refundable, but can be paused.',
+        'faq.q4': 'What is the data latency?',
+        'faq.a4': 'PRO users enjoy sub-100ms real-time data streams. Free and Basic plans have refresh rates of 5 minutes and 1 minute respectively.',
+        'faq.q5': 'Which prediction market platforms are supported?',
+        'faq.a5': 'Currently connected to Polymarket, Manifold, and Kalshi. We will continue to connect more global prediction market platforms.',
+        'faq.q6': 'What if I am new and unsure how to operate?',
+        'faq.a6': 'Each arbitrage signal comes with detailed step-by-step guides. We also provide community Q&A and beginner tutorials. Even beginners can get started quickly.',
+        
+        // Footer
+        'footer.copyright': '© 2024 PredictEdge. Trading involves risk. This tool is for reference only and does not constitute investment advice.',
       }
     };
 
@@ -590,9 +676,8 @@
       currentLang = lang;
       localStorage.setItem('predictedge_lang', lang);
       document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-      document.title = lang === 'zh' 
-        ? 'PredictEdge — 预测市场智能套利平台'
-        : 'PredictEdge — AI-Powered Prediction Market Arbitrage';
+      document.title = t('page.title');
+      document.querySelector('meta[name="description"]').content = t('page.description');
       render();
     }
 
@@ -653,11 +738,11 @@
           state.user = null;
           localStorage.removeItem('predictedge_token');
           render();
-          throw new Error('未登录');
+          throw new Error(t('toast.needLogin'));
         }
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.detail || '请求失败');
+          throw new Error(err.detail || t('toast.requestFailed'));
         }
         return await res.json();
       } catch (e) {
@@ -733,7 +818,7 @@
       const password = form.password.value;
       
       if (!username || !password) {
-        toast('请填写用户名和密码', 'error');
+        toast(t('toast.fillLoginFields'), 'error');
         return;
       }
       
@@ -746,11 +831,11 @@
         state.user = data.user;
         localStorage.setItem('predictedge_token', state.token);
         state.showAuthModal = false;
-        toast('登录成功', 'success');
+        toast(t('toast.loginSuccess'), 'success');
         await Promise.all([loadAlerts(), loadArbitrageData()]);
         render();
       } catch (e) {
-        toast(e.message || '登录失败', 'error');
+        toast(e.message || t('toast.loginFailed'), 'error');
       }
     }
 
@@ -762,12 +847,12 @@
       const password = form.password.value;
       
       if (!username || !password) {
-        toast('请填写用户名和密码', 'error');
+        toast(t('toast.fillLoginFields'), 'error');
         return;
       }
       
       if (password.length < 6) {
-        toast('密码至少6位', 'error');
+        toast(t('toast.fillLoginFields'), 'error');
         return;
       }
       
@@ -780,11 +865,11 @@
         state.user = data.user;
         localStorage.setItem('predictedge_token', state.token);
         state.showAuthModal = false;
-        toast('注册成功', 'success');
+        toast(t('toast.registerSuccess'), 'success');
         await Promise.all([loadAlerts(), loadArbitrageData()]);
         render();
       } catch (e) {
-        toast(e.message || '注册失败', 'error');
+        toast(e.message || t('toast.registerFailed'), 'error');
       }
     }
 
@@ -792,7 +877,7 @@
       state.token = null;
       state.user = null;
       localStorage.removeItem('predictedge_token');
-      toast('已退出登录', 'info');
+      toast(t('toast.loggedOut'), 'info');
       render();
     }
 
@@ -1911,22 +1996,12 @@
     // ==================== 模块8：FAQ区 ====================
     function renderFAQ() {
       const faqs = [
-        {
-          q: '套利是稳赚不赔的吗？',
-          a: '不是。Dutch Book 类策略理论上为无风险套利，但实际交易中仍可能受流动性、滑点、平台规则变动等因素影响，存在本金损失风险。PredictEdge 仅提供工具辅助与信号参考，不构成任何投资建议。'
-        },
-        {
-          q: '使用需要绑定我的交易账户资产吗？',
-          a: '不需要。基础版仅提供信号与数据，PRO 版的自动交易需用户自行授权 API 密钥，资产始终保留在您的平台账户中，我们无法划转您的资金。'
-        },
-        {
-          q: '支持哪些预测市场平台？',
-          a: '目前已接入 Polymarket、Manifold、Kalshi，后续将持续接入更多全球主流预测市场平台。'
-        },
-        {
-          q: '新手不会操作怎么办？',
-          a: '每个套利信号均附带详细的分步操作指南，同时我们提供社区答疑与新手入门教程，零基础也可快速上手。'
-        }
+        { q: t('faq.q1'), a: t('faq.a1') },
+        { q: t('faq.q2'), a: t('faq.a2') },
+        { q: t('faq.q3'), a: t('faq.a3') },
+        { q: t('faq.q4'), a: t('faq.a4') },
+        { q: t('faq.q5'), a: t('faq.a5') },
+        { q: t('faq.q6'), a: t('faq.a6') },
       ];
       
       return `
@@ -2257,7 +2332,7 @@
 
     function copyToClipboard(text) {
       navigator.clipboard.writeText(text).then(() => {
-        toast('已复制到剪贴板', 'success');
+        toast(t('toast.copied'), 'success');
       }).catch(() => {
         const ta = document.createElement('textarea');
         ta.value = text;
@@ -2265,7 +2340,7 @@
         ta.select();
         document.execCommand('copy');
         document.body.removeChild(ta);
-        toast('已复制到剪贴板', 'success');
+        toast(t('toast.copied'), 'success');
       });
     }
 
@@ -2302,10 +2377,10 @@
         });
         state.currentOrder = order;
         startOrderPolling(order.order_id);
-        toast('订单已创建', 'success');
+        toast(t('toast.orderCreated'), 'success');
         render();
       } catch (e) {
-        toast(e.message || '创建订单失败', 'error');
+        toast(e.message || t('toast.orderFailed'), 'error');
       }
     }
 
@@ -2322,7 +2397,7 @@
           if (order.status === 'paid' || order.status === 'completed') {
             clearInterval(state.orderPollingTimer);
             state.orderPollingTimer = null;
-            toast('支付成功！订阅已激活', 'success');
+            toast(t('toast.paymentSuccess'), 'success');
             if (state.user) {
               state.user.subscription_tier = order.tier;
               state.user.subscription_name = order.tier_name;
@@ -2355,7 +2430,7 @@
       
       const txHash = prompt('请输入您的交易哈希 (TxHash)：');
       if (!txHash || txHash.trim().length < 10) {
-        toast('请输入有效的交易哈希', 'error');
+        toast(t('toast.invalidTxHash'), 'error');
         return;
       }
       
@@ -2364,11 +2439,11 @@
           method: 'POST',
           body: JSON.stringify({ tx_hash: txHash.trim() })
         });
-        toast(result.message || '交易已提交，等待审核', 'success');
+        toast(result.message || t('toast.txSubmitted'), 'success');
         state.currentOrder.status = 'pending_manual';
         render();
       } catch (e) {
-        toast(e.message || '提交失败', 'error');
+        toast(e.message || t('toast.submitFailed'), 'error');
       }
     }
 
@@ -2687,7 +2762,7 @@
             </div>
             
             <div class="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-white/5 text-center text-[10px] sm:text-xs text-white/30">
-              © 2024 PredictEdge. 投资有风险，入市需谨慎。本工具仅供参考，不构成投资建议。
+              ${t('footer.copyright')}
             </div>
           </div>
         </footer>
@@ -2776,7 +2851,7 @@
       
       const remaining = getRemainingUnlocks();
       if (remaining <= 0) {
-        toast('今日免费解锁次数已用完，升级专业版解锁全部', 'warning');
+        toast(t('toast.freeUnlocksUsed'), 'warning');
         state.selectedEvent = null;
         document.body.style.overflow = '';
         render();
@@ -2792,12 +2867,12 @@
         if (state.user) {
           state.user.daily_events_viewed = (state.user.daily_events_viewed || 0) + 1;
         }
-        toast(`解锁成功！今日剩余 ${getRemainingUnlocks()} 次`, 'success');
+        toast(t('toast.unlockSuccess', { n: getRemainingUnlocks() }), 'success');
         render();
         return true;
       } catch (e) {
         if (e.message && e.message.includes('今日查看次数已用完')) {
-          toast('今日免费解锁次数已用完，升级专业版解锁全部', 'warning');
+          toast(t('toast.freeUnlocksUsed'), 'warning');
           if (state.user) {
             state.user.daily_events_viewed = state.user.daily_events_limit || state.dailyUnlockLimit;
           }
@@ -2808,7 +2883,7 @@
             document.getElementById('pricing')?.scrollIntoView({behavior: 'smooth'});
           }, 100);
         } else {
-          toast(e.message || '解锁失败', 'error');
+          toast(e.message || t('toast.unlockFailed'), 'error');
         }
         return false;
       }
@@ -2884,9 +2959,9 @@
           method: 'POST',
           body: JSON.stringify({ tier: state.selectedTier, payment_method: 'usdt' })
         });
-        toast(`订单已创建：${order.order_id}`, 'success');
+        toast(t('toast.orderCreated2', { orderId: order.order_id }), 'success');
       } catch (e) {
-        toast(e.message || '创建订单失败', 'error');
+        toast(e.message || t('toast.orderFailed'), 'error');
       }
     }
 
