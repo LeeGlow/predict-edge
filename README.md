@@ -1,98 +1,38 @@
 # PredictEdge
 
-AI-powered prediction market arbitrage platform. Real-time cross-platform probability deviation detection, historical win rate analysis, and executable arbitrage signals.
+**AI-powered prediction market arbitrage platform**
 
-## Features
+Turn market mispricing into profit. PredictEdge scans Polymarket, Manifold, Kalshi and other major prediction markets in real-time, detects probability deviations, and delivers actionable arbitrage signals.
 
-- **Real-time Monitoring**: Track 5+ prediction markets (Polymarket, Manifold, Kalshi) with <100ms data latency
-- **AI Deviation Detection**: Identify logical mispricing using historical data and news semantic models
-- **Arbitrage Signals**: Auto-calculate fees, slippage, and order depth to surface net-positive opportunities
-- **Multi-language Support**: English and Chinese interface
-- **Subscription Tiers**: Free preview, Basic ($9.9/mo), Pro ($29.9/mo), Enterprise ($99.9/mo)
+---
 
-## Tech Stack
+## What We Do
 
-- **Frontend**: Vanilla HTML/JS + Tailwind CSS (SPA)
-- **Backend**: FastAPI (Python 3.11)
-- **Auth**: JWT with bcrypt password hashing
-- **Rate Limiting**: slowapi (5 req/min register, 10 req/min login)
-- **Security**: CORS whitelist, security headers, CSP
+Prediction markets are inefficient. The same event often trades at different prices across platforms — that's free money left on the table.
 
-## Quick Start
+PredictEdge finds these opportunities for you:
 
-### Local Development
+- **Cross-platform arbitrage** — Same event, different prices, instant profit
+- **Dutch Book detection** — Risk-free profit by betting all outcomes
+- **AI-powered deviation alerts** — Get notified when probabilities shift
 
-```bash
-# Backend
-cd backend
-pip install -r requirements.txt
-uvicorn app:app --reload --port 8002
+## Live Demo
 
-# Frontend
-# Open frontend/index.html directly or serve via any static server
-```
+**[https://predict-edge-backend.onrender.com](https://predict-edge-backend.onrender.com)**
 
-### Environment Variables
+## Pricing
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `SECRET_KEY` | Yes | JWT signing key |
-| `ALLOWED_ORIGINS` | No | CORS origins (comma-separated, default: `*`) |
-| `PYTHON_VERSION` | No | Python version for Render |
+| Plan | Price | Features |
+|------|-------|----------|
+| Free | $0 | 3 opportunities/day, basic alerts |
+| Basic | $9.9/mo | 20 opportunities, 1-min refresh |
+| Pro | $29.9/mo | Unlimited, real-time, full analytics |
+| Enterprise | $99.9/mo | API access, custom strategies |
 
-## API Endpoints
+## Contact
 
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/health` | GET | No | Health check |
-| `/api/auth/register` | POST | No | User registration |
-| `/api/auth/login` | POST | No | User login |
-| `/api/auth/me` | GET | Yes | Current user info |
-| `/api/events` | GET | No | List prediction events |
-| `/api/alerts` | GET | Yes | User alerts |
+Interested in partnership or enterprise licensing? Reach out.
 
-Full API docs available at `/docs` (Swagger UI) when running locally.
+---
 
-## Deployment
-
-### Render (Recommended)
-
-1. Connect GitHub repo to Render
-2. Use `render.yaml` blueprint (auto-detected)
-3. Backend deploys as Web Service with auto static file serving
-
-Live URL: `https://predict-edge-backend.onrender.com`
-
-### Manual
-
-```bash
-git clone https://github.com/LeeGlow/predict-edge.git
-cd predict-edge/backend
-pip install -r requirements.txt
-uvicorn app:app --host 0.0.0.0 --port $PORT
-```
-
-## Project Structure
-
-```
-predict-edge/
-├── frontend/
-│   └── index.html          # Single-page app
-├── backend/
-│   ├── app.py              # FastAPI application
-│   └── requirements.txt    # Python dependencies
-├── render.yaml             # Render deployment config
-└── README.md
-```
-
-## Security
-
-- Passwords hashed with bcrypt
-- JWT tokens with expiration
-- Rate limiting on auth endpoints
-- Security headers (CSP, HSTS, X-Frame-Options)
-- CORS configured via environment variable
-
-## License
-
-MIT
+*PredictEdge — Find the edge the market missed.*
