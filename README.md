@@ -1,242 +1,98 @@
-# PredictEdge - 预测市场套利工具
+# PredictEdge
 
-> 监控市场概率变化，分析历史胜率，检测套利机会
+AI-powered prediction market arbitrage platform. Real-time cross-platform probability deviation detection, historical win rate analysis, and executable arbitrage signals.
 
----
+## Features
 
-## 🎯 产品定位
+- **Real-time Monitoring**: Track 5+ prediction markets (Polymarket, Manifold, Kalshi) with <100ms data latency
+- **AI Deviation Detection**: Identify logical mispricing using historical data and news semantic models
+- **Arbitrage Signals**: Auto-calculate fees, slippage, and order depth to surface net-positive opportunities
+- **Multi-language Support**: English and Chinese interface
+- **Subscription Tiers**: Free preview, Basic ($9.9/mo), Pro ($29.9/mo), Enterprise ($99.9/mo)
 
-### 解决什么问题？
+## Tech Stack
 
-预测市场玩家面临的问题：
-1. **信息不对称** — 不知道哪些概率被高估/低估
-2. **决策困难** — 不知道该相信哪个判断
-3. **机会错失** — 不知道什么时候该入场
+- **Frontend**: Vanilla HTML/JS + Tailwind CSS (SPA)
+- **Backend**: FastAPI (Python 3.11)
+- **Auth**: JWT with bcrypt password hashing
+- **Rate Limiting**: slowapi (5 req/min register, 10 req/min login)
+- **Security**: CORS whitelist, security headers, CSP
 
-### PredictEdge 做什么？
+## Quick Start
 
-1. **概率偏离警报** — 当概率大幅变动时第一时间通知
-2. **历史胜率分析** — 基于历史数据告诉你哪个概率更准
-3. **套利信号** — 找出被市场"错误定价"的机会
-
----
-
-## 💰 商业模式
-
-### 订阅制
-
-| 版本 | 价格 | 功能限制 |
-|------|------|---------|
-| 免费版 | $0 | 3个事件/天，5分钟刷新 |
-| 基础版 | $9.9/月 | 20个事件，1分钟刷新，基础警报 |
-| 专业版 | $29.9/月 | 无限事件，实时推送，深度分析，套利信号 |
-| 机构版 | $99.9/月 | API访问，批量数据，自定义策略 |
-
-### 其他收入
-
-- **数据订阅**：向机构出售历史数据
-- **广告**：向交易所、项目方卖广告位
-- **导流佣金**：引导用户去Polymarket等平台交易
-
----
-
-## 📊 目标用户
-
-### 1. 预测市场活跃玩家
-
-- 每天在Polymarket等平台交易
-- 需要工具帮助分析
-- 愿意为工具付费
-
-**画像**：25-45岁，技术背景，熟悉加密货币
-
-### 2. 量化交易者
-
-- 想做统计套利
-- 需要数据和分析
-- 付费能力强
-
-**画像**：30-50岁，量化背景，有交易经验
-
-### 3. 数据分析师
-
-- 研究预测市场效率
-- 需要历史数据
-- 可能发表研究报告
-
-**画像**：学术背景，数据分析能力
-
----
-
-## 🔧 核心功能
-
-### 1. 概率偏离警报
-
-```
-触发条件：
-- 概率变动超过 ±10% → 中级警报
-- 概率变动超过 ±20% → 高级警报
-- 概率突破 30%/50%/70%/90% 阈值 → 推送提醒
-
-警报内容：
-- 事件标题
-- 变动幅度
-- 当前概率 vs 之前概率
-- 预估原因（如果有数据）
-```
-
-### 2. 历史胜率分析
-
-```
-分析维度：
-- 按类型（天气/加密货币/体育/政治）
-- 按时间段（最近1周/1月/3月/全部）
-- 按概率区间（<30% / 30-70% / >70%）
-
-输出：
-- 该类型历史准确率
-- 最佳入场阈值
-- 偏差分析
-- 具体建议（买入YES/NO/观望）
-```
-
-### 3. 套利机会检测
-
-```
-检测逻辑：
-- 跨平台价格差异
-- 概率突破关键阈值后的趋势
-- 历史重演模式
-
-信号：
-- 套利机会类型
-- 预估利润
-- 置信度
-- 执行建议
-```
-
----
-
-## 🛠️ 技术架构
-
-```
-┌─────────────────────────────────────────────────────┐
-│                     前端                              │
-│  HTML + CSS + JavaScript (TailwindCSS)             │
-│  http://localhost:8080                              │
-└─────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────┐
-│                     后端 API                          │
-│  FastAPI (Python)                                   │
-│  http://localhost:8002                              │
-│                                                      │
-│  功能：                                             │
-│  - 数据爬取（Polymarket + polymarkets.co.il）      │
-│  - 价格监控                                         │
-│  - 警报生成                                         │
-│  - 分析计算                                         │
-└─────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────┐
-│                     数据存储                          │
-│  SQLite (演示) / PostgreSQL (生产)                  │
-│                                                      │
-│  存储：                                             │
-│  - 事件数据                                         │
-│  - 价格历史                                         │
-│  - 结算结果                                         │
-│  - 用户配置                                         │
-└─────────────────────────────────────────────────────┘
-```
-
----
-
-## 📈 发展路线图
-
-### 第一阶段（1-2个月）：MVP
-
-- [x] 基础UI界面
-- [x] 概率偏离警报
-- [x] 历史胜率分析
-- [ ] 跨平台数据对接
-- [ ] 用户注册登录
-- [ ] 订阅支付系统
-
-### 第二阶段（3-4个月）：增长
-
-- [ ] 推送通知（邮件/Telegram）
-- [ ] 移动端适配
-- [ ] 社交功能（分享/讨论）
-- [ ] 数据导出
-- [ ] API开放
-
-### 第三阶段（5-6个月）：生态
-
-- [ ] 机构数据服务
-- [ ] 策略回测工具
-- [ ] 社区激励
-- [ ] 合作分成
-
----
-
-## 🚀 快速开始
-
-### 本地运行
+### Local Development
 
 ```bash
-# 方式1：一键启动
-双击 启动.bat
-
-# 方式2：手动启动
+# Backend
 cd backend
-pip install fastapi uvicorn httpx
-python main.py
+pip install -r requirements.txt
+uvicorn app:app --reload --port 8002
 
-# 新开终端
-cd frontend
-python -m http.server 8080
+# Frontend
+# Open frontend/index.html directly or serve via any static server
 ```
 
-### 访问
+### Environment Variables
 
-打开浏览器：http://localhost:8080
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SECRET_KEY` | Yes | JWT signing key |
+| `ALLOWED_ORIGINS` | No | CORS origins (comma-separated, default: `*`) |
+| `PYTHON_VERSION` | No | Python version for Render |
 
----
+## API Endpoints
 
-## 📊 数据来源
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/health` | GET | No | Health check |
+| `/api/auth/register` | POST | No | User registration |
+| `/api/auth/login` | POST | No | User login |
+| `/api/auth/me` | GET | Yes | Current user info |
+| `/api/events` | GET | No | List prediction events |
+| `/api/alerts` | GET | Yes | User alerts |
 
-### 当前支持
+Full API docs available at `/docs` (Swagger UI) when running locally.
 
-| 平台 | URL | 状态 |
-|------|-----|------|
-| polymarkets.co.il | https://polymarkets.co.il | ✅ 已集成 |
-| Polymarket | https://polymarket.com | 🔜 开发中 |
+## Deployment
 
-### 计划支持
+### Render (Recommended)
 
-- Polymarket GraphQL API
-- Gnosis Prediction Market
-- Omen Prediction Market
-- 其他去中心化预测市场
+1. Connect GitHub repo to Render
+2. Use `render.yaml` blueprint (auto-detected)
+3. Backend deploys as Web Service with auto static file serving
 
----
+Live URL: `https://predict-edge-backend.onrender.com`
 
-## ⚠️ 风险提示
+### Manual
 
-1. **这不是投资建议** — 分析仅供参考，不构成投资建议
-2. **历史不代表未来** — 过去的准确率不能保证未来表现
-3. **市场有风险** — 预测市场本身有风险，请量力而行
-4. **数据可能延迟** — 实时性不能100%保证
+```bash
+git clone https://github.com/LeeGlow/predict-edge.git
+cd predict-edge/backend
+pip install -r requirements.txt
+uvicorn app:app --host 0.0.0.0 --port $PORT
+```
 
----
+## Project Structure
 
-## 📞 联系方式
+```
+predict-edge/
+├── frontend/
+│   └── index.html          # Single-page app
+├── backend/
+│   ├── app.py              # FastAPI application
+│   └── requirements.txt    # Python dependencies
+├── render.yaml             # Render deployment config
+└── README.md
+```
 
-- **网站**：predictedge.com (待上线)
-- **邮箱**：contact@predictedge.com
-- **Telegram**：@PredictEdge
+## Security
 
----
+- Passwords hashed with bcrypt
+- JWT tokens with expiration
+- Rate limiting on auth endpoints
+- Security headers (CSP, HSTS, X-Frame-Options)
+- CORS configured via environment variable
 
-**免责声明**：PredictEdge 仅提供数据分析工具，不参与任何交易，也不承担用户交易决策的责任。使用本工具即表示同意我们的服务条款和隐私政策。
+## License
+
+MIT
